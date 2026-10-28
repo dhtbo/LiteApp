@@ -31,6 +31,50 @@
   </script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    // 拦截并安全包装 lucide.createIcons，解决与 Vue 3 虚拟 DOM 的节点脱节冲突
+    // 原生 lucide.createIcons 使用 parentNode.replaceChild() 替换 DOM 节点，
+    // 导致 Vue 内部维护的 VNode.el 与真实 DOM 脱钩，在任何响应式更新、v-if/v-else 切换时
+    // 触发 "TypeError: Cannot read properties of null (reading 'insertBefore')"。
+    // 本包装通过向宿主节点内部注入 SVG 元素而非替换宿主节点本身，保证宿主节点生命周期由 Vue 全权接管。
+    (function() {
+      if (!window.lucide) return;
+      const toPascalCase = function(str) {
+        return str.replace(/(^\w|-\w)/g, function(s) {
+          return s.replace('-', '').toUpperCase();
+        });
+      };
+      
+      window.lucide.createIcons = function(options) {
+        options = options || {};
+        const nameAttr = options.nameAttr || 'data-lucide';
+        const root = options.root || document;
+        if (!root || !root.querySelectorAll) return;
+        
+        const elements = Array.from(root.querySelectorAll('[' + nameAttr + ']'));
+        elements.forEach(function(element) {
+          const iconName = element.getAttribute(nameAttr);
+          if (!iconName) return;
+          const pascalName = toPascalCase(iconName);
+          const iconNode = (lucide.icons && lucide.icons[pascalName]) || lucide[pascalName];
+          if (!iconNode) return;
+          
+          const svgElement = lucide.createElement(iconNode, {
+            width: '100%',
+            height: '100%',
+            class: 'lucide lucide-' + iconName + ' w-full h-full'
+          });
+          
+          element.innerHTML = '';
+          element.appendChild(svgElement);
+          element.style.display = 'inline-flex';
+          element.style.alignItems = 'center';
+          element.style.justifyContent = 'center';
+          element.style.verticalAlign = 'middle';
+        });
+      };
+    })();
+  </script>
   <!-- Highlight.js for Code Highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -526,8 +570,8 @@
                       @click="optimizeSystemInstruction" 
                       :disabled="isOptimizingSystemInstruction"
                       class="px-2.5 py-1 rounded-lg border border-brand-500/30 bg-brand-50/50 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-900/40 text-brand-600 dark:text-brand-400 text-[11px] font-semibold flex items-center gap-1 transition">
-                      <i v-if="isOptimizingSystemInstruction" data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
-                      <i v-else data-lucide="sparkles" class="w-3 h-3 text-cyan-400"></i>
+                      <i v-if="isOptimizingSystemInstruction" key="sys-load" data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
+                      <i v-else key="sys-sparkles" data-lucide="sparkles" class="w-3 h-3 text-cyan-400"></i>
                       <span>✨ AI 智能增强指令</span>
                     </button>
                     <button 
@@ -666,16 +710,16 @@
                         @click="aiPolishPromptInput"
                         :disabled="isGeneratingField || !promptInput.trim()"
                         class="px-2.5 py-1.5 rounded-xl border border-brand-500/30 bg-brand-50/50 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-900/40 text-brand-600 dark:text-brand-400 text-xs flex items-center gap-1 transition disabled:opacity-40">
-                        <i v-if="isGeneratingField" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
-                        <i v-else data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                        <i v-if="isGeneratingField" key="polish-load" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                        <i v-else key="polish-sparkles" data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
                         <span>AI 扩写需求</span>
                       </button>
                       <button 
                         @click="sendPrompt" 
                         :disabled="isGenerating || !promptInput.trim()"
                         class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
-                        <i v-if="isGenerating" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
-                        <i v-else data-lucide="send" class="w-3.5 h-3.5"></i>
+                        <i v-if="isGenerating" key="send-load" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                        <i v-else key="send-icon" data-lucide="send" class="w-3.5 h-3.5"></i>
                         <span>{{ isGenerating ? '生成中...' : '发送指令' }}</span>
                       </button>
                     </div>
@@ -978,8 +1022,8 @@
                   @click="triggerInspect(true)" 
                   :disabled="isExtractingMetadata || (!formHtmlCode.trim() && !selectedHtmlFile && !selectedZipFile)"
                   class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 disabled:opacity-40 text-white shadow-sm flex items-center gap-1.5 active:scale-95 transition">
-                  <i v-if="isExtractingMetadata" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
-                  <i v-else data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                  <i v-if="isExtractingMetadata" key="inspect-loading" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                  <i v-else key="inspect-idle" data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
                   <span>{{ isExtractingMetadata ? 'AI 正在分析生成...' : '✨ AI 智能生成名称与说明' }}</span>
                 </button>
                 <button 
@@ -1190,8 +1234,8 @@
                 type="submit" 
                 :disabled="isSubmitting"
                 class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-brand-500/20 active:scale-95 transition">
-                <i v-if="isSubmitting" data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                <i v-else data-lucide="check" class="w-4 h-4"></i>
+                <i v-if="isSubmitting" key="submitting-load" data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                <i v-else key="submitting-check" data-lucide="check" class="w-4 h-4"></i>
                 <span>{{ isSubmitting ? '正在处理部署...' : '立即发布应用' }}</span>
               </button>
             </div>
@@ -1352,8 +1396,8 @@
               :disabled="isExtractingMetadata"
               title="根据右侧生成的代码自动让 AI 提取优化标题与简介"
               class="px-2.5 py-1 text-[11px] rounded-lg bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800/60 hover:bg-brand-100 dark:hover:bg-brand-900/60 flex items-center gap-1 font-semibold transition">
-              <i v-if="isExtractingMetadata" data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
-              <i v-else data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i>
+              <i v-if="isExtractingMetadata" key="pub-load" data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
+              <i v-else key="pub-spark" data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i>
               <span>AI 提炼信息</span>
             </button>
             <button @click="showPublishModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -1755,8 +1799,8 @@
                   @click="triggerFastAgentSuite" 
                   :disabled="isGeneratingField"
                   class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white flex items-center gap-1.5 shadow-md shadow-brand-500/25 active:scale-95 transition disabled:opacity-50 shrink-0">
-                  <i v-if="isGeneratingField" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
-                  <i v-else data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-200"></i>
+                  <i v-if="isGeneratingField" key="suite-load" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                  <i v-else key="suite-spark" data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-200"></i>
                   <span>一键构思</span>
                 </button>
               </div>
