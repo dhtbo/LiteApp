@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 import openpyxl
 
 from app.core.logger import logger
+from app.core.config import settings
 from app.schema.app_schema import (
     AgentAppGenerateRequest,
     N8nAppGenerateRequest,
@@ -161,6 +162,8 @@ def generate_agent_app_html(req: AgentAppGenerateRequest) -> GeneratedAppResult:
     tools_json = json.dumps(tools_list, ensure_ascii=False)
     skills_json = json.dumps(req.skills or [], ensure_ascii=False)
     mcp_servers_json = json.dumps([m.model_dump() if hasattr(m, "model_dump") else m for m in (req.mcp_servers or [])], ensure_ascii=False)
+    default_n8n_endpoint = f"{settings.N8N_BASE_URL.rstrip('/')}/api/v1/workflows"
+    default_n8n_key = settings.N8N_API_KEY
 
     html_code = f"""<!DOCTYPE html>
 <html lang="zh-CN" class="dark">
@@ -569,13 +572,24 @@ def generate_agent_app_html(req: AgentAppGenerateRequest) -> GeneratedAppResult:
 
       if (!targetEndpoint) {{
         const defaultTool = TOOLS_CONFIG.find(t => t.name === 'create_n8n_workflow');
-        if (defaultTool && defaultTool.endpoint) {{
+        if (defaultTool && defaultTool.endpoint && !defaultTool.endpoint.includes('your-domain.com')) {{
           targetEndpoint = defaultTool.endpoint;
+        }} else {{
+          targetEndpoint = '{default_n8n_endpoint}';
+        }}
+      }}
+
+      if (!apiKey) {{
+        const defaultTool = TOOLS_CONFIG.find(t => t.name === 'create_n8n_workflow');
+        if (defaultTool && defaultTool.headers && defaultTool.headers['X-N8N-API-KEY']) {{
+          apiKey = defaultTool.headers['X-N8N-API-KEY'];
+        }} else {{
+          apiKey = '{default_n8n_key}';
         }}
       }}
 
       if (!targetEndpoint || targetEndpoint.includes('your-domain.com')) {{
-        const userUrl = prompt('请输入您的 n8n 实例地址 (例如 https://n8n.my-site.com/api/v1/workflows):', targetEndpoint);
+        const userUrl = prompt('请输入您的 n8n 实例地址 (例如 https://n8n.my-site.com/api/v1/workflows):', targetEndpoint || '{default_n8n_endpoint}');
         if (!userUrl) return;
         targetEndpoint = userUrl.trim();
         localOverrides['create_n8n_workflow_endpoint'] = targetEndpoint;
@@ -662,6 +676,9 @@ def generate_n8n_app_html(req: N8nAppGenerateRequest) -> GeneratedAppResult:
     生成 n8n 自动化微应用 (Chat 嵌入 或 Webhook 触发看板)
     """
     slug = req.slug or sanitize_slug(req.title)
+    webhook_target = req.webhook_url
+    if not webhook_target or "your-domain.com" in webhook_target:
+        webhook_target = f"{settings.N8N_BASE_URL.rstrip('/')}/webhook/test"
 
     if req.mode == "chat":
         # 生成 n8n Chat 嵌入应用
@@ -691,7 +708,7 @@ def generate_n8n_app_html(req: N8nAppGenerateRequest) -> GeneratedAppResult:
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <a href="{req.webhook_url}" target="_blank" class="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg flex items-center gap-1.5 border border-slate-700">
+      <a href="{webhook_target}" target="_blank" class="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg flex items-center gap-1.5 border border-slate-700">
         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
         <span>直达链接</span>
       </a>
@@ -700,7 +717,7 @@ def generate_n8n_app_html(req: N8nAppGenerateRequest) -> GeneratedAppResult:
 
   <!-- n8n Chat 全屏容器 -->
   <main id="n8n-chat-container" class="flex-1 w-full h-full relative">
-    <iframe src="{req.webhook_url}" class="w-full h-full border-none" allow="microphone; camera; clipboard-read; clipboard-write"></iframe>
+    <iframe src="{webhook_target}" class="w-full h-full border-none" allow="microphone; camera; clipboard-read; clipboard-write"></iframe>
   </main>
 
   <script>
@@ -796,7 +813,7 @@ def generate_n8n_app_html(req: N8nAppGenerateRequest) -> GeneratedAppResult:
 
   <script>
     lucide.createIcons();
-    const WEBHOOK_URL = "{req.webhook_url}";
+    const WEBHOOK_URL = "{webhook_target}";
     const HTTP_METHOD = "{req.http_method or 'POST'}";
     const FIELDS = {fields_json};
 

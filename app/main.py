@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.logger import logger
 from app.repository.database import init_db
-from app.api import auth, apps, llm, sites, generator, forms
+from app.api import auth, apps, llm, sites, generator, forms, system
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -52,6 +52,7 @@ app.include_router(llm.router)
 app.include_router(sites.router)
 app.include_router(generator.router)
 app.include_router(forms.router)
+app.include_router(system.router)
 
 # 容器健康检查端点 (Docker HEALTHCHECK / Coolify 探针)
 @app.get("/api/health", tags=["系统监控"])

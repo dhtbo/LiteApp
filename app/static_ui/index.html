@@ -1335,6 +1335,83 @@
             </div>
           </div>
         </div>
+
+        <!-- n8n 自动化服务全局集成设置 -->
+        <div class="mt-8 rounded-3xl bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder p-6 shadow-sm space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 border border-orange-500/30 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="zap" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>n8n 自动化引擎与工作流集成</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full font-mono bg-orange-500/10 text-orange-500 border border-orange-500/20">全局统一配置</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  配置智能体生成器、API 扩展工具与 Webhook 默认绑定的全局 n8n 实例端点
+                </p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                @click="testN8nConnection" 
+                :disabled="isTestingN8n"
+                class="px-3.5 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 transition disabled:opacity-50">
+                <i data-lucide="activity" class="w-3.5 h-3.5 text-orange-500"></i>
+                <span>{{ isTestingN8n ? '测试中...' : '测试连通性' }}</span>
+              </button>
+              <button 
+                type="button" 
+                @click="handleSaveSystemConfig" 
+                :disabled="isSavingSystemConfig"
+                class="px-4 py-1.5 text-xs font-semibold rounded-xl bg-orange-600 hover:bg-orange-500 text-white shadow-md shadow-orange-500/20 flex items-center gap-1.5 transition disabled:opacity-50">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>{{ isSavingSystemConfig ? '保存中...' : '保存配置' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+                <span>n8n 服务地址 (Base URL)</span>
+                <span class="text-[10px] text-slate-400 font-normal">格式如 https://ai.ljcode.cn</span>
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                </span>
+                <input 
+                  v-model="systemConfig.n8n_base_url" 
+                  type="url" 
+                  placeholder="https://ai.ljcode.cn" 
+                  class="w-full pl-9 pr-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-800 dark:text-slate-100"
+                >
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+                <span>n8n API Key (X-N8N-API-KEY)</span>
+                <span class="text-[10px] text-slate-400 font-normal">用于免登录创建/同步工作流</span>
+              </label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <i data-lucide="key" class="w-3.5 h-3.5"></i>
+                </span>
+                <input 
+                  v-model="systemConfig.n8n_api_key" 
+                  type="password" 
+                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." 
+                  class="w-full pl-9 pr-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-800 dark:text-slate-100"
+                >
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
     </main>
@@ -1931,7 +2008,7 @@
                           </button>
                         </div>
                       </div>
-                      <input v-model="tool.endpoint" placeholder="API 请求地址，如 https://n8n.your-domain.com/api/v1/workflows" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] font-mono text-slate-700 dark:text-slate-300 outline-none">
+                      <input v-model="tool.endpoint" placeholder="API 请求地址，如 https://ai.ljcode.cn/api/v1/workflows" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] font-mono text-slate-700 dark:text-slate-300 outline-none">
                       <input v-model="tool.description" placeholder="工具用途说明指导大模型调用" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] text-slate-600 dark:text-slate-400 outline-none">
                     </div>
                   </div>
@@ -1959,7 +2036,7 @@
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">n8n Webhook 或 Chat URL</label>
-              <input v-model="n8nForm.webhook_url" type="url" placeholder="https://n8n.your-domain.com/webhook/..." class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <input v-model="n8nForm.webhook_url" type="url" placeholder="https://ai.ljcode.cn/webhook/..." class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             </div>
             <div v-if="n8nForm.mode === 'webhook'">
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">HTTP 请求方式</label>
@@ -2611,13 +2688,15 @@
 
         const addToolToAgent = () => {
           if (!agentForm.value.tools) agentForm.value.tools = [];
+          const baseUrl = (systemConfig.value.n8n_base_url || 'https://ai.ljcode.cn').replace(/\/$/, '');
+          const apiKey = systemConfig.value.n8n_api_key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyODY0ZDgxZS0xNzdiLTRmOTMtYTY5ZC1jYTBiNTRlMTE5ZWMiLCJpc3MiOiJuOG4iLCJqdGkiOiJhNzkyYzFhMy05M2E5LTRhOWMtOTRjNy0xMzFkYTVlY2NjMTUiLCJpYXQiOjE3OTMxNzU0OTAsImF1ZCI6InB1YmxpYy1hcGkifQ.HwI8LMd9ef7p-lPkQUGwahm185wIPub5RygeEFw9PEI';
           agentForm.value.tools.push({
             name: `tool_${Date.now()}`,
             label: '创建 n8n 工作流',
             description: '通过 n8n API 创建并激活自动化工作流',
-            endpoint: 'https://n8n.your-domain.com/api/v1/workflows',
+            endpoint: `${baseUrl}/api/v1/workflows`,
             method: 'POST',
-            headers: { 'X-N8N-API-KEY': 'your-api-key-here' },
+            headers: { 'X-N8N-API-KEY': apiKey },
             payload_template: ''
           });
           nextTick(() => lucide.createIcons());
@@ -2700,9 +2779,9 @@
                   name: 'create_n8n_workflow',
                   label: '推送到 n8n 实例 (POST /api/v1/workflows)',
                   description: '将生成的工作流 JSON 推送到用户的私有 n8n 实例',
-                  endpoint: 'https://n8n.your-domain.com/api/v1/workflows',
+                  endpoint: 'https://ai.ljcode.cn/api/v1/workflows',
                   method: 'POST',
-                  headers: { 'X-N8N-API-KEY': 'your-api-key-here' },
+                  headers: { 'X-N8N-API-KEY': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyODY0ZDgxZS0xNzdiLTRmOTMtYTY5ZC1jYTBiNTRlMTE5ZWMiLCJpc3MiOiJuOG4iLCJqdGkiOiJhNzkyYzFhMy05M2E5LTRhOWMtOTRjNy0xMzFkYTVlY2NjMTUiLCJpYXQiOjE3OTMxNzU0OTAsImF1ZCI6InB1YmxpYy1hcGkifQ.HwI8LMd9ef7p-lPkQUGwahm185wIPub5RygeEFw9PEI' },
                   payload_template: ''
                 }
               ],
@@ -2792,7 +2871,7 @@
           title: 'n8n 自动化流看板',
           icon: '⚡',
           mode: 'chat',
-          webhook_url: 'https://n8n.your-domain.com/webhook/test',
+          webhook_url: 'https://ai.ljcode.cn/webhook/test',
           http_method: 'POST'
         });
 
@@ -2809,6 +2888,10 @@
           if (!isAdmin.value) {
             openLoginModal();
             return;
+          }
+          const baseUrl = (systemConfig.value.n8n_base_url || 'https://ai.ljcode.cn').replace(/\/$/, '');
+          if (!n8nForm.value.webhook_url || n8nForm.value.webhook_url.includes('your-domain.com')) {
+            n8nForm.value.webhook_url = `${baseUrl}/webhook/test`;
           }
           showGeneratorModal.value = true;
           nextTick(() => lucide.createIcons());
@@ -3817,6 +3900,95 @@ generateApp();`;
           }
         };
 
+        // ================= 模块 5: 全局系统与 n8n 配置 =================
+        const systemConfig = ref({
+          n8n_base_url: 'https://ai.ljcode.cn',
+          n8n_api_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyODY0ZDgxZS0xNzdiLTRmOTMtYTY5ZC1jYTBiNTRlMTE5ZWMiLCJpc3MiOiJuOG4iLCJqdGkiOiJhNzkyYzFhMy05M2E5LTRhOWMtOTRjNy0xMzFkYTVlY2NjMTUiLCJpYXQiOjE3OTMxNzU0OTAsImF1ZCI6InB1YmxpYy1hcGkifQ.HwI8LMd9ef7p-lPkQUGwahm185wIPub5RygeEFw9PEI'
+        });
+        const isSavingSystemConfig = ref(false);
+        const isTestingN8n = ref(false);
+
+        const fetchSystemConfig = async () => {
+          try {
+            const res = await fetch('/api/system/config');
+            if (res.ok) {
+              const data = await res.json();
+              if (data.n8n_base_url) systemConfig.value.n8n_base_url = data.n8n_base_url;
+              if (data.n8n_api_key) systemConfig.value.n8n_api_key = data.n8n_api_key;
+            }
+          } catch (e) {
+            console.error('获取系统配置失败:', e);
+          }
+        };
+
+        const handleSaveSystemConfig = async () => {
+          if (!isAdmin.value) {
+            openLoginModal();
+            return;
+          }
+          isSavingSystemConfig.value = true;
+          try {
+            const res = await fetch('/api/system/config', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value
+              },
+              body: JSON.stringify({
+                n8n_base_url: systemConfig.value.n8n_base_url,
+                n8n_api_key: systemConfig.value.n8n_api_key
+              })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              showToast('全局配置保存成功', 'success');
+              if (data.n8n_base_url) {
+                systemConfig.value = { ...data };
+              }
+            } else {
+              showToast(data.detail || '保存失败', 'error');
+            }
+          } catch (e) {
+            showToast('请求异常: ' + e.message, 'error');
+          } finally {
+            isSavingSystemConfig.value = false;
+          }
+        };
+
+        const testN8nConnection = async () => {
+          if (!systemConfig.value.n8n_base_url) {
+            showToast('请先填写 n8n Base URL', 'info');
+            return;
+          }
+          isTestingN8n.value = true;
+          try {
+            const target = systemConfig.value.n8n_base_url.replace(/\/$/, '') + '/api/v1/workflows?limit=1';
+            const headers = {};
+            if (systemConfig.value.n8n_api_key) {
+              headers['X-N8N-API-KEY'] = systemConfig.value.n8n_api_key;
+            }
+            const res = await fetch('/api/agent/proxy-call', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                endpoint: target,
+                method: 'GET',
+                headers: headers
+              })
+            });
+            const data = await res.json();
+            if (res.ok && (data.status === 'success' || data.data)) {
+              showToast('n8n 服务连通正常！', 'success');
+            } else {
+              showToast('n8n 连通异常: ' + (data.message || JSON.stringify(data)), 'error');
+            }
+          } catch (e) {
+            showToast('测试连接失败: ' + e.message, 'error');
+          } finally {
+            isTestingN8n.value = false;
+          }
+        };
+
         // 工具函数
         const formatDate = (dateStr) => {
           if (!dateStr) return '';
@@ -3848,6 +4020,7 @@ generateApp();`;
         watch(currentTab, (newTab) => {
           if (newTab === 'settings') {
             fetchModels();
+            fetchSystemConfig();
           }
           const targetPath = newTab === 'portal' ? '/' : `/${newTab}`;
           if (window.location.pathname !== targetPath) {
@@ -3868,6 +4041,7 @@ generateApp();`;
           lucide.createIcons();
           await checkAuth();
           await fetchApps();
+          await fetchSystemConfig();
           if (isAdmin.value) {
             await fetchModels();
           }
@@ -3908,9 +4082,10 @@ generateApp();`;
           isExtractingMetadata, lastInspectSource, triggerInspect, aiGeneratePublishMetadata,
           activeIconPicker, emojiGroups, toggleIconPicker, selectIcon,
           handleSelectHtmlFile, handleDropHtmlFile, handleSelectZipFile, handleDropZipFile, handleManualPublish,
-          // 模型设置
+          // 模型设置与全局配置
           modelsList, showModelModal, modelForm, openAddModelModal, openEditModelModal, handleSaveModelSubmit,
           activateModel, testModelConnection, confirmDeleteModel,
+          systemConfig, isSavingSystemConfig, isTestingN8n, fetchSystemConfig, handleSaveSystemConfig, testN8nConnection,
           // 工具
           formatDate, formatFileSize, renderMarkdown,
         };

@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
+    # NOTE: n8n 工作流引擎与开放 API 集成配置
+    N8N_BASE_URL: str = "https://ai.ljcode.cn"
+    N8N_API_KEY: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyODY0ZDgxZS0xNzdiLTRmOTMtYTY5ZC1jYTBiNTRlMTE5ZWMiLCJpc3MiOiJuOG4iLCJqdGkiOiJhNzkyYzFhMy05M2E5LTRhOWMtOTRjNy0xMzFkYTVlY2NjMTUiLCJpYXQiOjE3OTMxNzU0OTAsImF1ZCI6InB1YmxpYy1hcGkifQ.HwI8LMd9ef7p-lPkQUGwahm185wIPub5RygeEFw9PEI"
+
     @property
     def data_path(self) -> Path:
         """获取并自动创建数据根目录"""

@@ -3,6 +3,7 @@ import json
 from typing import AsyncGenerator, List, Dict, Any, Optional
 import httpx
 from fastapi import HTTPException, status
+from app.core.config import settings
 from app.core.logger import logger
 from app.model.models import LLMProviderModel
 from app.schema.llm_schema import AIChatMessage
@@ -496,10 +497,10 @@ async def generate_agent_suite_with_ai(
                     "name": "create_n8n_workflow",
                     "label": "一键推送创建至 n8n 实例",
                     "description": "调用 n8n 官方 REST API (POST /api/v1/workflows) 创建工作流",
-                    "endpoint": "https://n8n.your-domain.com/api/v1/workflows",
+                    "endpoint": f"{settings.N8N_BASE_URL.rstrip('/')}/api/v1/workflows",
                     "method": "POST",
                     "headers": {
-                        "X-N8N-API-KEY": "",
+                        "X-N8N-API-KEY": settings.N8N_API_KEY,
                         "Content-Type": "application/json"
                     },
                     "parameters_schema": {
