@@ -1,0 +1,47 @@
+# 数据与上传目录
+data/
+/data
+*.db
+*.sqlite3
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 环境与密钥
+.env
+.env.local
+.venv
+venv/
+ENV/
+
+# 测试与构建
+.pytest_cache/
+*.log
+
+# 编辑器与操作系统
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

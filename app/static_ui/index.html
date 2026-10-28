@@ -1,0 +1,3877 @@
+<!DOCTYPE html>
+<html lang="zh-CN" :class="{ 'dark': isDark }">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LiteApp Studio - AI 静态微应用开发与发布平台</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <!-- TailwindCSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            darkBg: '#0b0f19',
+            darkCard: '#111827',
+            darkBorder: '#1f2937',
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Highlight.js for Code Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+  <!-- Marked.js for Markdown Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Vue 3 Global Build -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    /* 自定义细腻滚动条 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.6); }
+    .dark ::-webkit-scrollbar-thumb { background: rgba(75, 85, 99, 0.5); }
+    .dark ::-webkit-scrollbar-thumb:hover { background: rgba(75, 85, 99, 0.8); }
+
+    /* 平滑过渡 */
+    * { transition: background-color 0.2s ease, border-color 0.2s ease; }
+    
+    /* 打字机渐变微动效 */
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    .pulse-glow { animation: pulse-glow 2s infinite ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+  <div id="app" class="flex flex-col flex-1" v-cloak>
+    
+    <!-- ================= 顶部全局导航栏 ================= -->
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-darkCard/80 backdrop-blur-md border-b border-slate-200 dark:border-darkBorder">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        
+        <!-- 品牌标识与 Logo -->
+        <div class="flex items-center gap-3 cursor-pointer" @click="currentTab = 'portal'">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-cyan-500 p-0.5 shadow-md shadow-brand-500/20 flex items-center justify-center">
+            <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-5 h-5 text-cyan-400"></i>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-brand-600 via-indigo-500 to-cyan-500 dark:from-brand-400 dark:via-indigo-300 dark:to-cyan-400 bg-clip-text text-transparent">
+                LiteApp Studio
+              </span>
+              <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 rounded border border-brand-200 dark:border-brand-700/50">
+                v1.0
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400 hidden sm:block">AI 静态微应用开发与发布平台</p>
+          </div>
+        </div>
+
+        <!-- 核心业务导航 Tab 切换 -->
+        <nav class="flex items-center gap-1 sm:gap-2 bg-slate-100 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-medium">
+          <button 
+            @click="currentTab = 'portal'" 
+            :class="currentTab === 'portal' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            class="px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+            <span>应用广场</span>
+          </button>
+          <button 
+            @click="currentTab = 'ai'" 
+            :class="currentTab === 'ai' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            class="px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+            <i data-lucide="cpu" class="w-4 h-4"></i>
+            <span>AI 创客</span>
+          </button>
+          <button 
+            @click="currentTab = 'upload'" 
+            :class="currentTab === 'upload' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            class="px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span>手动发布</span>
+          </button>
+          <button 
+            @click="currentTab = 'settings'" 
+            :class="currentTab === 'settings' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+            class="px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            <span>模型配置</span>
+          </button>
+        </nav>
+
+        <!-- 右侧状态：管理鉴权与主题开关 -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- 管理员状态徽标 -->
+          <button 
+            v-if="!isAdmin" 
+            @click="openLoginModal" 
+            class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 transition">
+            <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-500"></i>
+            <span class="hidden sm:inline">管理员登录</span>
+          </button>
+          <div v-else class="flex items-center gap-1.5">
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              已认证
+            </span>
+            <button 
+              @click="handleLogout" 
+              title="退出管理权限" 
+              class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- 暗黑/明亮主题切换 -->
+          <button 
+            @click="toggleTheme" 
+            class="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            :title="isDark ? '切换至亮色模式' : '切换至暗色模式'">
+            <i :data-lucide="isDark ? 'sun' : 'moon'" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= 页面主体内容 ================= -->
+    <main class="flex-1 flex flex-col">
+
+      <!-- ================= 视图 1: 应用门户广场 ================= -->
+      <section v-show="currentTab === 'portal'" class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col flex-1">
+        <!-- 概览看板与搜索头 -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              微应用门户广场
+              <span class="text-xs font-normal px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                共托管 {{ apps.length }} 个独立微应用
+              </span>
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              轻量、单页、免构建运行，每个微应用拥有独立的访问路径
+            </p>
+          </div>
+
+          <!-- 搜索与操作按钮 -->
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative min-w-[240px]">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input 
+                v-model="searchQuery" 
+                @input="handleSearch"
+                type="text" 
+                placeholder="搜索标题、简介或 Slug..." 
+                class="w-full pl-9 pr-4 py-2 text-sm rounded-xl bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-sm"
+              >
+            </div>
+            <button 
+              @click="openGeneratorModal"
+              class="px-4 py-2 text-sm font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-cyan-700 dark:text-cyan-300 border border-slate-300 dark:border-cyan-500/30 flex items-center gap-2 active:scale-95 transition">
+              <i data-lucide="wand-2" class="w-4 h-4 text-cyan-500 dark:text-cyan-400"></i>
+              <span>智能向导 (Agent/表单)</span>
+            </button>
+            <button 
+              @click="currentTab = 'ai'"
+              class="px-4 py-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-md shadow-brand-500/20 flex items-center gap-2 active:scale-95 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>AI 生成新应用</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 分类筛选 Pill 标签栏 -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-slate-200/80 dark:border-slate-800/80 text-xs font-medium">
+          <button 
+            @click="filterCategory('全部')"
+            :class="selectedCategory === '全部' ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/30' : 'bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'"
+            class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap">
+            全部 ({{ allAppsCount }})
+          </button>
+          <button 
+            v-for="cat in categories" 
+            :key="cat"
+            @click="filterCategory(cat)"
+            :class="selectedCategory === cat ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/30' : 'bg-slate-200/60 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'"
+            class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap">
+            {{ cat }}
+          </button>
+        </div>
+
+        <!-- 微应用卡片网格流 -->
+        <div v-if="loadingApps" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="i in 6" :key="i" class="h-48 rounded-2xl bg-slate-200/50 dark:bg-darkCard/50 animate-pulse border border-slate-200 dark:border-darkBorder"></div>
+        </div>
+
+        <div v-else-if="apps.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div 
+            v-for="app in apps" 
+            :key="app.id"
+            class="group bg-white dark:bg-darkCard rounded-2xl border border-slate-200 dark:border-darkBorder hover:border-brand-500/50 dark:hover:border-brand-500/50 p-6 flex flex-col justify-between shadow-sm hover:shadow-xl hover:shadow-brand-500/5 transition-all duration-300">
+            
+            <!-- 卡片上部 -->
+            <div>
+              <div class="flex items-start justify-between gap-3 mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-500/10 to-indigo-500/20 border border-brand-500/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                  {{ app.icon || '🚀' }}
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
+                    {{ app.category || '通用' }}
+                  </span>
+                  <span 
+                    :class="app.entry_type === 'zip' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' : 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20'"
+                    class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border">
+                    {{ app.entry_type }}
+                  </span>
+                </div>
+              </div>
+
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-1">
+                {{ app.title }}
+              </h3>
+              
+              <p class="text-xs font-mono text-slate-400 dark:text-slate-500 mt-0.5 mb-2">
+                /s/{{ app.slug }}/
+              </p>
+
+              <p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                {{ app.description || '暂无详细描述信息。' }}
+              </p>
+            </div>
+
+            <!-- 卡片底部元数据与操作组 -->
+            <div class="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-3">
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span class="flex items-center gap-1" title="累计访问次数">
+                  <i data-lucide="eye" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span>{{ app.view_count }} 次浏览</span>
+                </span>
+                <span class="text-[11px]">{{ formatDate(app.created_at) }}</span>
+              </div>
+
+              <!-- 按钮操作栏 -->
+              <div class="flex items-center justify-between gap-2">
+                <button 
+                  @click="openApp(app.slug)" 
+                  class="flex-1 py-2 px-3 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition">
+                  <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                  <span>运行应用</span>
+                </button>
+
+                <button 
+                  @click="copyShareLink(app.slug)" 
+                  title="复制分享链接"
+                  class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+                  <i data-lucide="copy" class="w-4 h-4"></i>
+                </button>
+
+                <!-- 管理操作：在工坊中编辑/版本历史/元信息编辑/重新覆盖/删除 -->
+                <button 
+                  v-if="isAdmin" 
+                  @click="editInStudio(app)" 
+                  title="在 AI 工坊中再次迭代编辑"
+                  class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-brand-100 dark:hover:bg-brand-900/40 text-slate-600 dark:text-brand-400 transition">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </button>
+
+                <button 
+                  v-if="isAdmin" 
+                  @click="openVersionsModal(app)" 
+                  title="查看版本快照与一键回滚"
+                  class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-600 dark:text-amber-400 transition">
+                  <i data-lucide="history" class="w-4 h-4"></i>
+                </button>
+
+                <button 
+                  v-if="isAdmin && (app.category === '数据收集' || app.title.includes('表单') || app.title.includes('登记'))" 
+                  @click="openSubmissionsModal(app)" 
+                  title="查看后端收集到的数据记录与导出"
+                  class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-slate-600 dark:text-emerald-400 transition">
+                  <i data-lucide="database" class="w-4 h-4"></i>
+                </button>
+
+                <button 
+                  v-if="isAdmin" 
+                  @click="openEditModal(app)" 
+                  title="编辑元信息"
+                  class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+
+                <button 
+                  v-if="isAdmin" 
+                  @click="openOverwriteModal(app)" 
+                  title="代码/文件覆盖更新"
+                  class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-slate-600 dark:text-indigo-400 transition">
+                  <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
+
+                <button 
+                  v-if="isAdmin" 
+                  @click="confirmDeleteApp(app)" 
+                  title="删除应用"
+                  class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-900/40 text-slate-600 dark:text-red-400 transition">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 空状态提示 -->
+        <div v-else class="flex flex-col items-center justify-center py-20 text-center flex-1">
+          <div class="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-darkCard border border-slate-200 dark:border-darkBorder flex items-center justify-center text-3xl mb-4 shadow-inner">
+            🔍
+          </div>
+          <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">没有找到匹配的微应用</h3>
+          <p class="text-xs text-slate-400 mt-1 max-w-sm">尝试更换搜索词或分类，或者点击下方按钮通过 AI 即刻生成一个全新微应用。</p>
+          <button 
+            @click="currentTab = 'ai'"
+            class="mt-6 px-4 py-2 text-xs font-semibold rounded-xl bg-brand-600 text-white shadow-md shadow-brand-500/20 hover:bg-brand-500 transition">
+            前往 AI 创客工作台
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= 视图 2: AI 创客工作台 (Google AI Studio 风格现代化工作台) ================= -->
+      <section v-show="currentTab === 'ai'" class="flex-1 flex flex-col h-[calc(100vh-4rem)] overflow-hidden bg-slate-100/50 dark:bg-darkBg">
+        
+        <!-- Google AI Studio 顶栏 -->
+        <div class="h-14 bg-white/95 dark:bg-darkCard/95 border-b border-slate-200 dark:border-darkBorder px-4 sm:px-6 flex items-center justify-between text-xs backdrop-blur-md shrink-0 z-20">
+          <!-- 左侧：内联可编辑应用标题与模型信息 -->
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-600 to-cyan-500 p-0.5 flex items-center justify-center text-white shadow-sm shrink-0">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </span>
+              <!-- 内联可编辑 Prompt 标题 -->
+              <div class="flex items-center gap-1.5 group">
+                <input 
+                  v-if="isEditingStudioTitle" 
+                  ref="studioTitleInput"
+                  v-model="studioTitle" 
+                  @blur="isEditingStudioTitle = false" 
+                  @keydown.enter="isEditingStudioTitle = false"
+                  class="text-sm font-bold bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-brand-500 focus:outline-none text-slate-900 dark:text-white"
+                  placeholder="未命名创意应用"
+                >
+                <div 
+                  v-else 
+                  @click="startEditStudioTitle" 
+                  class="flex items-center gap-1 cursor-pointer py-0.5 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  title="点击重命名应用">
+                  <span class="text-sm font-bold text-slate-900 dark:text-white">{{ studioTitle }}</span>
+                  <i data-lucide="edit-2" class="w-3 h-3 text-slate-400 group-hover:text-brand-500 transition"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- 状态指示芯片 (Google AI 经典指示灯) -->
+            <div class="hidden md:flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+              <span 
+                v-if="isGenerating"
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-ping"></span>
+                <span>正在流式编码...</span>
+              </span>
+              <span 
+                v-else-if="generatedHtml"
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>沙盒实时就绪</span>
+              </span>
+              <span 
+                v-else
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                <span>就绪</span>
+              </span>
+
+              <span class="text-slate-400 text-[11px] font-mono hidden lg:inline">
+                {{ activeModelName || '未配置模型' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- 右侧动作组 (Get Code / Inspector / Reset / Publish) -->
+          <div class="flex items-center gap-2">
+            <!-- Get Code 生产级代码导出按钮 -->
+            <button 
+              @click="openGetCodeModal" 
+              class="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 transition shadow-2xs active:scale-95"
+              title="获取生产级 Python / JS / cURL 调用代码">
+              <i data-lucide="code-2" class="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400"></i>
+              <span class="hidden sm:inline">Get Code</span>
+            </button>
+
+            <!-- 右侧面板切换按钮 (沙盒预览 vs 参数配置) -->
+            <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+              <button 
+                @click="rightPanelTab = 'preview'" 
+                :class="rightPanelTab === 'preview' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 shadow-xs font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'"
+                class="px-2.5 py-1 rounded-lg flex items-center gap-1 transition">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                <span class="hidden md:inline">实时沙盒</span>
+              </button>
+              <button 
+                @click="rightPanelTab = 'settings'" 
+                :class="rightPanelTab === 'settings' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 shadow-xs font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800'"
+                class="px-2.5 py-1 rounded-lg flex items-center gap-1 transition">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span class="hidden md:inline">运行参数</span>
+                <span v-if="runSettings.temperature !== 0.7" class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+              </button>
+            </div>
+
+            <!-- 重置按钮 -->
+            <button 
+              @click="clearChat" 
+              title="重置当前对话与沙盒" 
+              class="p-1.5 rounded-xl border border-slate-200 dark:border-darkBorder hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            </button>
+
+            <!-- 发布操作 -->
+            <button 
+              v-if="editingApp"
+              @click="overwriteEditingApp" 
+              :disabled="!generatedHtml || isSubmitting" 
+              class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold flex items-center gap-1.5 transition shadow-sm active:scale-95"
+              title="直接覆盖更新原微应用并自动保存快照">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+              <span>覆盖更新原应用</span>
+            </button>
+            <button 
+              @click="openPublishModal" 
+              :disabled="!generatedHtml" 
+              class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-white font-semibold flex items-center gap-1.5 transition shadow-md shadow-brand-500/20 active:scale-95">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              <span>{{ editingApp ? '另存为新应用' : '发布到门户' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 正在二次迭代微应用的横幅提示 -->
+        <div v-if="editingApp" class="px-4 py-2 bg-gradient-to-r from-brand-900/80 via-indigo-900/80 to-purple-900/80 border-b border-brand-500/30 flex items-center justify-between text-xs shrink-0">
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-brand-400 animate-ping"></span>
+            <span class="text-slate-300 font-medium">正在二次迭代微应用：</span>
+            <span class="font-bold text-brand-300">{{ editingApp.title }}</span>
+            <span class="text-slate-400 font-mono">(/s/{{ editingApp.slug }}/)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click="cancelEditingApp" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition text-[11px] border border-slate-700">
+              退出二次迭代
+            </button>
+          </div>
+        </div>
+
+        <!-- 分屏工作区：左侧控制区 + 右侧检查器/沙盒 -->
+        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          
+          <!-- 左侧控制面板 (50% 宽度) -->
+          <div class="w-full lg:w-1/2 flex flex-col border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-darkBorder bg-slate-50/50 dark:bg-darkBg/50 overflow-hidden">
+            
+            <!-- Google AI Studio 经典特性: 可折叠 System Instructions 面板 -->
+            <div class="border-b border-slate-200 dark:border-darkBorder bg-slate-100/70 dark:bg-slate-950/40 text-xs">
+              <div 
+                @click="showSystemInstruction = !showSystemInstruction" 
+                class="px-4 py-2 flex items-center justify-between cursor-pointer hover:bg-slate-200/50 dark:hover:bg-slate-900/60 transition select-none">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="terminal" class="w-3.5 h-3.5 text-brand-500"></i>
+                  <span class="font-bold text-slate-700 dark:text-slate-300">System Instructions</span>
+                  <span class="text-[10px] text-slate-400 font-mono">({{ systemInstructionText.length }} 字符)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span v-if="!showSystemInstruction" class="text-[11px] text-slate-400 truncate max-w-xs hidden sm:inline">
+                    {{ systemInstructionText.slice(0, 45) }}...
+                  </span>
+                  <i :data-lucide="showSystemInstruction ? 'chevron-up' : 'chevron-down'" class="w-4 h-4 text-slate-400"></i>
+                </div>
+              </div>
+
+              <!-- 展开后的指令编辑框 -->
+              <div v-show="showSystemInstruction" class="p-3 pt-0 space-y-2">
+                <textarea 
+                  v-model="systemInstructionText" 
+                  rows="4" 
+                  placeholder="在此定义大模型的系统角色设定、代码规范与输出约束..."
+                  class="w-full p-2.5 text-xs font-mono rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-y"
+                ></textarea>
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] text-slate-400">将在每次对话生成时作为 System 指令注入</span>
+                  <div class="flex items-center gap-2">
+                    <button 
+                      type="button" 
+                      @click="optimizeSystemInstruction" 
+                      :disabled="isOptimizingSystemInstruction"
+                      class="px-2.5 py-1 rounded-lg border border-brand-500/30 bg-brand-50/50 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-900/40 text-brand-600 dark:text-brand-400 text-[11px] font-semibold flex items-center gap-1 transition">
+                      <i v-if="isOptimizingSystemInstruction" data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
+                      <i v-else data-lucide="sparkles" class="w-3 h-3 text-cyan-400"></i>
+                      <span>✨ AI 智能增强指令</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      @click="resetSystemInstruction" 
+                      class="px-2 py-1 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-[11px]">
+                      恢复默认
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 标签页切换：Prompt 对话 vs 源码编辑器 -->
+            <div class="h-10 px-4 bg-white dark:bg-darkCard border-b border-slate-200 dark:border-darkBorder flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <button 
+                  @click="activeLeftTab = 'chat'" 
+                  :class="activeLeftTab === 'chat' ? 'text-brand-600 dark:text-brand-400 font-bold border-b-2 border-brand-500' : 'text-slate-500 dark:text-slate-400'"
+                  class="h-10 px-2 flex items-center gap-1.5 transition">
+                  <i data-lucide="messages-square" class="w-3.5 h-3.5"></i>
+                  <span>Prompt 对话流</span>
+                </button>
+                <button 
+                  @click="activeLeftTab = 'code'" 
+                  :class="activeLeftTab === 'code' ? 'text-brand-600 dark:text-brand-400 font-bold border-b-2 border-brand-500' : 'text-slate-500 dark:text-slate-400'"
+                  class="h-10 px-2 flex items-center gap-1.5 transition">
+                  <i data-lucide="code" class="w-3.5 h-3.5"></i>
+                  <span>HTML 源码编辑</span>
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button 
+                  v-if="activeLeftTab === 'code'" 
+                  @click="copyCode" 
+                  class="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center gap-1 transition">
+                  <i data-lucide="clipboard" class="w-3 h-3"></i>
+                  <span>复制代码</span>
+                </button>
+                <button 
+                  @click="clearChat" 
+                  title="重置对话" 
+                  class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                  <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tab 1: 对话历史与 Prompt 输入 -->
+            <div v-show="activeLeftTab === 'chat'" class="flex-1 flex flex-col overflow-hidden">
+              <!-- 消息列表流 -->
+              <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <!-- 预设灵感卡片提示 -->
+                <div v-if="chatMessages.length === 0" class="p-6 text-center">
+                  <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto mb-3 text-2xl shadow-xs">
+                    💡
+                  </div>
+                  <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">描述你想要的微应用，AI 即刻编码</h4>
+                  <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                    无需任何构建工具，生成单文件 HTML、自适应排版、内联 TailwindCSS 与 Lucide 图标。
+                  </p>
+                  
+                  <div class="mt-6 flex flex-wrap gap-2 justify-center max-w-md mx-auto">
+                    <button 
+                      v-for="(preset, idx) in presetPrompts" 
+                      :key="idx" 
+                      @click="usePresetPrompt(preset)"
+                      class="text-left text-xs px-3 py-2 rounded-xl bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder hover:border-brand-500/50 hover:bg-brand-50 dark:hover:bg-brand-950/30 text-slate-700 dark:text-slate-300 transition shadow-2xs">
+                      ✨ {{ preset.title }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 消息条目 -->
+                <div 
+                  v-for="(msg, index) in chatMessages" 
+                  :key="index"
+                  class="flex gap-3 text-xs"
+                  :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+                  
+                  <div 
+                    v-if="msg.role === 'assistant'" 
+                    class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex-shrink-0 flex items-center justify-center shadow-sm">
+                    <i data-lucide="bot" class="w-4 h-4"></i>
+                  </div>
+
+                  <div 
+                    :class="msg.role === 'user' ? 'bg-brand-600 text-white rounded-2xl rounded-tr-sm' : 'bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm'"
+                    class="p-3.5 max-w-[85%] shadow-sm leading-relaxed break-words">
+                    <div v-if="msg.role === 'user'">{{ msg.content }}</div>
+                    <div v-else>
+                      <div v-if="msg.rawExplanation" class="mb-2 text-slate-500 dark:text-slate-400" v-html="renderMarkdown(msg.rawExplanation)"></div>
+                      <div v-if="msg.hasCode" class="flex items-center gap-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 font-mono">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span>已成功生成单文件 HTML 代码并注入沙盒预览</span>
+                      </div>
+                      <div v-else-if="isGenerating && index === chatMessages.length - 1" class="flex items-center gap-2 text-slate-400 pulse-glow">
+                        <i data-lucide="loader" class="w-4 h-4 animate-spin text-brand-500"></i>
+                        <span>AI 正在流式编写代码并构建 DOM...</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div 
+                    v-if="msg.role === 'user'" 
+                    class="w-7 h-7 rounded-lg bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex-shrink-0 flex items-center justify-center">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 底部输入框 (Google AI Studio 风格，带快捷键支持) -->
+              <div class="p-3 bg-white dark:bg-darkCard border-t border-slate-200 dark:border-darkBorder">
+                <div class="relative rounded-2xl bg-slate-100 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 focus-within:ring-2 focus-within:ring-brand-500 p-2.5">
+                  <textarea 
+                    v-model="promptInput" 
+                    @keydown.enter.exact.prevent="sendPrompt"
+                    @keydown.ctrl.enter="sendPrompt"
+                    @keydown.meta.enter="sendPrompt"
+                    rows="3" 
+                    placeholder="例如：开发一个带赛博朋克深色风格、支持倒计时与暂停的番茄钟应用... (Enter 发送, Shift+Enter 换行, Ctrl+Enter 运行)"
+                    class="w-full bg-transparent border-0 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none resize-none px-2 py-1 leading-relaxed"
+                  ></textarea>
+
+                  <div class="flex items-center justify-between pt-2 px-1 border-t border-slate-200/50 dark:border-slate-800/50">
+                    <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                      <span>快捷键: <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Ctrl+Enter</kbd> 运行</span>
+                      <span>•</span>
+                      <span>温度: {{ runSettings.temperature }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button 
+                        type="button"
+                        @click="aiPolishPromptInput"
+                        :disabled="isGeneratingField || !promptInput.trim()"
+                        class="px-2.5 py-1.5 rounded-xl border border-brand-500/30 bg-brand-50/50 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-900/40 text-brand-600 dark:text-brand-400 text-xs flex items-center gap-1 transition disabled:opacity-40">
+                        <i v-if="isGeneratingField" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                        <i v-else data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                        <span>AI 扩写需求</span>
+                      </button>
+                      <button 
+                        @click="sendPrompt" 
+                        :disabled="isGenerating || !promptInput.trim()"
+                        class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-40 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+                        <i v-if="isGenerating" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                        <i v-else data-lucide="send" class="w-3.5 h-3.5"></i>
+                        <span>{{ isGenerating ? '生成中...' : '发送指令' }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 2: 源码编辑器 (实时编辑与语法高亮) -->
+            <div v-show="activeLeftTab === 'code'" class="flex-1 flex flex-col overflow-hidden bg-slate-900 text-slate-100">
+              <div class="p-2 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <span>单文件源码 (实时编辑将自动热重载右侧预览)</span>
+                <span class="font-mono text-[11px] text-indigo-400">{{ (generatedHtml || '').length }} 字符</span>
+              </div>
+              <textarea 
+                v-model="generatedHtml" 
+                @input="handleCodeChange"
+                spellcheck="false"
+                class="flex-1 w-full p-4 font-mono text-xs leading-relaxed bg-transparent text-emerald-300 focus:outline-none resize-none"
+                placeholder="AI 生成的代码将显示在此处，你也可以直接在这里修改或手动编写代码..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- 右侧区域: 双模式面板 (实时沙盒 Preview vs Run Settings 参数检查器) -->
+          <div class="w-full lg:w-1/2 flex-1 flex flex-col bg-slate-200/40 dark:bg-slate-950/40 relative overflow-hidden">
+            
+            <!-- 模式 1: 实时沙盒预览 (Preview) -->
+            <div v-show="rightPanelTab === 'preview'" class="flex-1 flex flex-col p-2 sm:p-4 items-center justify-center overflow-hidden">
+              <div 
+                class="h-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-300 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col transition-all duration-300"
+                :class="{
+                  'w-full max-w-full': viewportMode === 'desktop',
+                  'w-[768px] max-w-full': viewportMode === 'tablet',
+                  'w-[375px] max-w-full': viewportMode === 'mobile',
+                }">
+                
+                <!-- 仿浏览器标签栏 -->
+                <div class="h-9 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 px-3 flex items-center justify-between text-[11px] text-slate-400">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-400/80"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></span>
+                  </div>
+
+                  <!-- 响应式尺寸切换 -->
+                  <div class="flex items-center gap-1 bg-white dark:bg-slate-900 p-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                    <button 
+                      @click="viewportMode = 'desktop'" 
+                      :class="viewportMode === 'desktop' ? 'bg-slate-100 dark:bg-slate-800 text-brand-500 font-bold' : 'text-slate-400'"
+                      title="桌面全宽" class="px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <i data-lucide="monitor" class="w-3 h-3"></i>
+                      <span class="text-[10px] hidden sm:inline">Desktop</span>
+                    </button>
+                    <button 
+                      @click="viewportMode = 'tablet'" 
+                      :class="viewportMode === 'tablet' ? 'bg-slate-100 dark:bg-slate-800 text-brand-500 font-bold' : 'text-slate-400'"
+                      title="平板视口 (768px)" class="px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <i data-lucide="tablet" class="w-3 h-3"></i>
+                      <span class="text-[10px] hidden sm:inline">Tablet</span>
+                    </button>
+                    <button 
+                      @click="viewportMode = 'mobile'" 
+                      :class="viewportMode === 'mobile' ? 'bg-slate-100 dark:bg-slate-800 text-brand-500 font-bold' : 'text-slate-400'"
+                      title="手机视口 (375px)" class="px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <i data-lucide="smartphone" class="w-3 h-3"></i>
+                      <span class="text-[10px] hidden sm:inline">Mobile</span>
+                    </button>
+                  </div>
+
+                  <!-- 快捷操作按钮 -->
+                  <div class="flex items-center gap-1.5">
+                    <button @click="refreshPreview" title="重新加载沙盒" class="hover:text-slate-200 p-1 rounded transition">
+                      <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button @click="openInNewTab" title="在新窗口中全屏打开" class="hover:text-slate-200 p-1 rounded transition">
+                      <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 核心沙盒 IFrame -->
+                <div class="flex-1 relative bg-white">
+                  <iframe 
+                    ref="sandboxFrame" 
+                    class="w-full h-full border-0"
+                    sandbox="allow-scripts allow-modals allow-forms allow-same-origin allow-popups"
+                  ></iframe>
+
+                  <!-- 未生成代码时的友好占位 -->
+                  <div v-if="!generatedHtml" class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                    <div class="w-16 h-16 rounded-3xl bg-slate-800 border border-slate-700 flex items-center justify-center text-3xl mb-3 shadow-lg">
+                      ⚡
+                    </div>
+                    <h4 class="text-sm font-bold text-slate-200">实时交互渲染沙盒</h4>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs">
+                      在左侧输入需求或直接编写 HTML 代码，生成的页面将在此处获得完全隔离的实时交互预览。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 模式 2: Google AI Studio 经典 Run Settings & Inspector 面板 -->
+            <div v-show="rightPanelTab === 'settings'" class="flex-1 overflow-y-auto p-5 space-y-6 text-xs text-slate-700 dark:text-slate-300">
+              
+              <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-brand-500/10 text-brand-500 flex items-center justify-center">
+                    <i data-lucide="sliders" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-sm text-slate-900 dark:text-white">Run Settings (运行参数)</h3>
+                    <p class="text-[11px] text-slate-400">微调大语言模型的生成偏好、随机性与输出长度</p>
+                  </div>
+                </div>
+                <button @click="rightPanelTab = 'preview'" class="px-2.5 py-1 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-medium flex items-center gap-1 transition">
+                  <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                  <span>返回沙盒</span>
+                </button>
+              </div>
+
+              <!-- 模型选择器 -->
+              <div class="space-y-1.5">
+                <label class="block font-semibold flex items-center justify-between">
+                  <span>Model (驱动大模型)</span>
+                  <span class="text-[11px] text-brand-500 font-mono">OpenAI Compatible</span>
+                </label>
+                <select 
+                  v-model="runSettings.model_id" 
+                  class="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  <option :value="null">默认系统当前激活模型 ({{ activeModelName }})</option>
+                  <option v-for="m in modelsList" :key="m.id" :value="m.id">
+                    {{ m.name }} ({{ m.model_name }})
+                  </option>
+                </select>
+                <p class="text-[10px] text-slate-400">支持在「模型配置」菜单中添加更多兼容模型端点</p>
+              </div>
+
+              <!-- Temperature 滑块 -->
+              <div class="space-y-2 p-3.5 rounded-2xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-800">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="font-semibold text-slate-900 dark:text-white">Temperature (温度 / 采样随机性)</span>
+                    <p class="text-[10px] text-slate-400">控制输出的随机性与发散程度</p>
+                  </div>
+                  <input 
+                    type="number" 
+                    step="0.05" 
+                    min="0" 
+                    max="2" 
+                    v-model.number="runSettings.temperature" 
+                    class="w-16 px-2 py-1 text-center font-mono text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="2" 
+                  step="0.05" 
+                  v-model.number="runSettings.temperature" 
+                  class="w-full accent-brand-600 cursor-pointer">
+                <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                  <span>0.0 (严谨精确)</span>
+                  <span>0.7 (默认适度)</span>
+                  <span>2.0 (极大创意)</span>
+                </div>
+              </div>
+
+              <!-- Top P 滑块 -->
+              <div class="space-y-2 p-3.5 rounded-2xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-800">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="font-semibold text-slate-900 dark:text-white">Top P (核采样)</span>
+                    <p class="text-[10px] text-slate-400">仅从概率累积达到 P 的最高概率词汇中采样</p>
+                  </div>
+                  <input 
+                    type="number" 
+                    step="0.05" 
+                    min="0" 
+                    max="1" 
+                    v-model.number="runSettings.top_p" 
+                    class="w-16 px-2 py-1 text-center font-mono text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                </div>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="1" 
+                  step="0.05" 
+                  v-model.number="runSettings.top_p" 
+                  class="w-full accent-brand-600 cursor-pointer">
+                <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                  <span>0.0</span>
+                  <span>1.0 (全概率分布)</span>
+                </div>
+              </div>
+
+              <!-- Max Output Tokens 滑块 -->
+              <div class="space-y-2 p-3.5 rounded-2xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-800">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="font-semibold text-slate-900 dark:text-white">Max Output Tokens (单次响应上限)</span>
+                    <p class="text-[10px] text-slate-400">大模型单次生成单文件 HTML 的最大 Token 数限制</p>
+                  </div>
+                  <input 
+                    type="number" 
+                    step="256" 
+                    min="512" 
+                    max="16384" 
+                    v-model.number="runSettings.max_tokens" 
+                    class="w-20 px-2 py-1 text-center font-mono text-xs rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                </div>
+                <input 
+                  type="range" 
+                  min="512" 
+                  max="8192" 
+                  step="256" 
+                  v-model.number="runSettings.max_tokens" 
+                  class="w-full accent-brand-600 cursor-pointer">
+                <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                  <span>512</span>
+                  <span>4096 (推荐)</span>
+                  <span>8192</span>
+                </div>
+              </div>
+
+              <!-- 高级扩展能力状态提示 -->
+              <div class="p-3.5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40 space-y-2">
+                <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold">
+                  <i data-lucide="zap" class="w-4 h-4"></i>
+                  <span>高级扩展集成特性</span>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  生成的单文件微应用会自动整合 TailwindCSS CDN、Lucide 矢量图标，并在沙盒环境中通过代理网关安全访问外部 API。
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 视图 3: 手动上传发布器 ================= -->
+      <section v-show="currentTab === 'upload'" class="max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col flex-1">
+        
+        <div class="mb-8 text-center max-w-xl mx-auto">
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            手动上传与发布微应用
+          </h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            支持拖拽单文件 HTML 或静态完整站点的 ZIP 压缩包，自动配置 Slug 路由
+          </p>
+        </div>
+
+        <!-- 模式切换 Tab -->
+        <div class="flex items-center justify-center mb-8">
+          <div class="bg-slate-200/70 dark:bg-slate-900 p-1 rounded-2xl border border-slate-300 dark:border-slate-800 flex items-center text-xs font-semibold">
+            <button 
+              @click="uploadMode = 'single'"
+              :class="uploadMode === 'single' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'"
+              class="px-5 py-2 rounded-xl flex items-center gap-2 transition">
+              <i data-lucide="file-code" class="w-4 h-4"></i>
+              <span>模式 A: 单 HTML 上传/粘贴</span>
+            </button>
+            <button 
+              @click="uploadMode = 'zip'"
+              :class="uploadMode === 'zip' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 shadow-md' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'"
+              class="px-5 py-2 rounded-xl flex items-center gap-2 transition">
+              <i data-lucide="folder-archive" class="w-4 h-4"></i>
+              <span>模式 B: 静态目录 ZIP 上传</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 表单容器 -->
+        <div class="bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 sm:p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">
+          
+          <form @submit.prevent="handleManualPublish" class="space-y-6">
+            
+            <!-- 智能提取与 AI 生成快捷操作条 -->
+            <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-brand-50/80 to-indigo-50/60 dark:from-brand-950/40 dark:to-indigo-950/30 border border-brand-200/60 dark:border-brand-900/40">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-brand-600/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center shadow-sm">
+                  <i data-lucide="sparkles" class="w-4 h-4 text-brand-500"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <span>智能元信息生成</span>
+                    <span v-if="lastInspectSource" class="text-[10px] px-1.5 py-0.2 rounded font-mono font-normal bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300">
+                      {{ lastInspectSource === 'ai_generated' ? 'AI已生成' : '已提取标签' }}
+                    </span>
+                  </h4>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">上传项目后，可自动提取页面标签或由 AI 深度理解生成标题与说明</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  @click="triggerInspect(true)" 
+                  :disabled="isExtractingMetadata || (!formHtmlCode.trim() && !selectedHtmlFile && !selectedZipFile)"
+                  class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 disabled:opacity-40 text-white shadow-sm flex items-center gap-1.5 active:scale-95 transition">
+                  <i v-if="isExtractingMetadata" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                  <i v-else data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                  <span>{{ isExtractingMetadata ? 'AI 正在分析生成...' : '✨ AI 智能生成名称与说明' }}</span>
+                </button>
+                <button 
+                  type="button" 
+                  @click="triggerInspect(false)" 
+                  :disabled="isExtractingMetadata || (!formHtmlCode.trim() && !selectedHtmlFile && !selectedZipFile)"
+                  class="px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 disabled:opacity-40 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 transition">
+                  <i data-lucide="file-search" class="w-3.5 h-3.5 text-cyan-500"></i>
+                  <span>提取标签</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 基础元数据网格 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  应用标识 Slug (URL 路径) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">/s/</span>
+                  <input 
+                    v-model="formSlug" 
+                    type="text" 
+                    required 
+                    placeholder="my-tool" 
+                    class="w-full pl-8 pr-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
+                  >
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1">2-50 位小写英文、数字或短横线，例如 pomodoro-timer</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  应用显示标题 <span class="text-red-500">*</span>
+                </label>
+                <input 
+                  v-model="formTitle" 
+                  type="text" 
+                  required 
+                  placeholder="例如：极简番茄钟助手" 
+                  class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
+                >
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  分类标签
+                </label>
+                <input 
+                  v-model="formCategory" 
+                  type="text" 
+                  placeholder="例如：效率工具、小游戏、数据可视化" 
+                  class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
+                >
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
+                  <span>图标 Emoji</span>
+                  <span class="text-[10px] text-slate-400 font-normal">点击展开下拉选择</span>
+                </label>
+                <div class="relative">
+                  <div class="flex items-center gap-1.5">
+                    <button 
+                      type="button" 
+                      @click="toggleIconPicker('form')" 
+                      class="w-10 h-9 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-500/50 flex items-center justify-center text-lg shadow-sm transition active:scale-95 flex-shrink-0"
+                      title="点击展开选择图标">
+                      {{ formIcon || '🚀' }}
+                    </button>
+                    <input 
+                      v-model="formIcon" 
+                      type="text" 
+                      placeholder="🚀" 
+                      class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
+                    >
+                    <button 
+                      type="button" 
+                      @click="toggleIconPicker('form')" 
+                      class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex-shrink-0 transition">
+                      <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+
+                  <!-- 下拉选择浮层面板 -->
+                  <div 
+                    v-if="activeIconPicker === 'form'" 
+                    class="absolute z-50 right-0 sm:left-0 sm:right-auto sm:w-72 mt-1 p-3 rounded-2xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 shadow-2xl backdrop-blur-xl animate-fade-in">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 px-1">
+                      <span>精选应用图标</span>
+                      <button type="button" @click="activeIconPicker = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                      </button>
+                    </div>
+                    <div class="max-h-52 overflow-y-auto space-y-2.5 pr-1">
+                      <div v-for="group in emojiGroups" :key="group.name">
+                        <div class="text-[10px] font-semibold text-slate-400 mb-1 px-1">{{ group.name }}</div>
+                        <div class="grid grid-cols-6 gap-1">
+                          <button 
+                            v-for="e in group.emojis" 
+                            :key="e" 
+                            type="button" 
+                            @click="selectIcon('form', e)"
+                            :class="formIcon === e ? 'bg-brand-500/20 border-brand-500 scale-105' : 'hover:bg-slate-100 dark:hover:bg-slate-800 border-transparent'"
+                            class="w-8 h-8 rounded-lg border flex items-center justify-center text-base hover:scale-110 active:scale-95 transition">
+                            {{ e }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                应用简介描述
+              </label>
+              <textarea 
+                v-model="formDescription" 
+                rows="2" 
+                placeholder="简要介绍这个微应用的功能与亮点..." 
+                class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100 resize-none"
+              ></textarea>
+            </div>
+
+            <!-- 模式 A: 单 HTML 文件拖拽或源码粘贴 -->
+            <div v-show="uploadMode === 'single'" class="space-y-4">
+              <div 
+                @dragover.prevent="dragOver = true" 
+                @dragleave.prevent="dragOver = false"
+                @drop.prevent="handleDropHtmlFile"
+                :class="dragOver ? 'border-brand-500 bg-brand-500/10' : 'border-slate-300 dark:border-slate-800'"
+                class="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer hover:border-brand-500 transition relative">
+                <input 
+                  type="file" 
+                  accept=".html,.htm" 
+                  @change="handleSelectHtmlFile" 
+                  class="absolute inset-0 opacity-0 cursor-pointer"
+                >
+                <i data-lucide="file-up" class="w-8 h-8 text-brand-500 mx-auto mb-2"></i>
+                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  点击选择或拖拽单个 .html 文件到此处
+                </p>
+                <p class="text-[11px] text-slate-400 mt-0.5">将自动提取内容并重命名为 index.html</p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  <span>或直接在此粘贴 HTML 源码</span>
+                  <button type="button" @click="formHtmlCode = ''" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">清空</button>
+                </div>
+                <textarea 
+                  v-model="formHtmlCode" 
+                  rows="6" 
+                  placeholder="<!DOCTYPE html><html>...粘贴你的完整单文件 HTML 源码...</html>" 
+                  class="w-full p-3 text-xs font-mono leading-relaxed rounded-xl bg-slate-900 text-emerald-400 border border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-y"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- 模式 B: 静态 ZIP 压缩包上传 -->
+            <div v-show="uploadMode === 'zip'" class="space-y-4">
+              <div 
+                @dragover.prevent="dragOver = true" 
+                @dragleave.prevent="dragOver = false"
+                @drop.prevent="handleDropZipFile"
+                :class="dragOver ? 'border-brand-500 bg-brand-500/10' : 'border-slate-300 dark:border-slate-800'"
+                class="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer hover:border-brand-500 transition relative">
+                <input 
+                  type="file" 
+                  accept=".zip" 
+                  @change="handleSelectZipFile" 
+                  class="absolute inset-0 opacity-0 cursor-pointer"
+                >
+                <i data-lucide="folder-archive" class="w-10 h-10 text-brand-500 mx-auto mb-2"></i>
+                <div v-if="selectedZipFile">
+                  <p class="text-xs font-bold text-emerald-500 flex items-center justify-center gap-1">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>已选择: {{ selectedZipFile.name }} ({{ formatFileSize(selectedZipFile.size) }})</span>
+                  </p>
+                  <p class="text-[11px] text-slate-400 mt-1">点击可更换其他压缩包</p>
+                </div>
+                <div v-else>
+                  <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    点击选择或拖拽包含静态站点的 .zip 压缩包
+                  </p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">支持最大 50MB，自动解包并配置托管路径</p>
+                </div>
+              </div>
+
+              <!-- ZIP 智能处理特性指引 -->
+              <div class="rounded-xl bg-brand-50/50 dark:bg-slate-900/60 border border-brand-200/50 dark:border-slate-800 p-4 text-xs space-y-1.5 text-slate-600 dark:text-slate-400">
+                <div class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500"></i>
+                  <span>ZIP 智能解包防护保障：</span>
+                </div>
+                <p>• <strong>智能扁平化 (Flatten Root Directory)</strong>：若 ZIP 内含唯一外层子目录（如 <code>dist/</code>），系统会自动将其提升至根目录，确保 <code>/s/{slug}/index.html</code> 直接可访问。</p>
+                <p>• <strong>安全防穿越 (Zip Slip 防御)</strong>：严格禁止包含 <code>..</code> 或绝对路径的危险条目。</p>
+              </div>
+            </div>
+
+            <!-- 提交按钮 -->
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800">
+              <button 
+                type="submit" 
+                :disabled="isSubmitting"
+                class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-brand-500/20 active:scale-95 transition">
+                <i v-if="isSubmitting" data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                <i v-else data-lucide="check" class="w-4 h-4"></i>
+                <span>{{ isSubmitting ? '正在处理部署...' : '立即发布应用' }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ================= 视图 4: 模型配置与管理 ================= -->
+      <section v-show="currentTab === 'settings'" class="max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col flex-1">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              大模型接口配置 (OpenAI 兼容)
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              配置支持 OpenAI 规范的第三方或自建模型服务（如 DeepSeek、OneAPI、Ollama、Claude 等）
+            </p>
+          </div>
+
+          <button 
+            @click="openAddModelModal" 
+            class="px-4 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-500/20 flex items-center gap-2 active:scale-95 transition self-start sm:self-auto">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>添加模型端点</span>
+          </button>
+        </div>
+
+        <!-- 模型列表卡片 -->
+        <div v-if="modelsList.length === 0" class="p-12 text-center rounded-3xl bg-white dark:bg-darkCard border border-slate-200 dark:border-darkBorder">
+          <i data-lucide="cpu" class="w-12 h-12 text-slate-400 mx-auto mb-3"></i>
+          <h4 class="text-sm font-bold text-slate-700 dark:text-slate-300">尚未配置任何大模型接口</h4>
+          <p class="text-xs text-slate-400 mt-1">点击右上角“添加模型端点”进行持久化配置。</p>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div 
+            v-for="m in modelsList" 
+            :key="m.id"
+            :class="m.is_active ? 'border-brand-500/80 bg-brand-50/10 dark:bg-brand-950/20' : 'border-slate-200 dark:border-darkBorder bg-white dark:bg-darkCard'"
+            class="rounded-2xl border p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition shadow-sm">
+            
+            <div class="flex items-start gap-4">
+              <div 
+                :class="m.is_active ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'"
+                class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <i data-lucide="bot" class="w-5 h-5"></i>
+              </div>
+
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-sm font-bold text-slate-900 dark:text-white">{{ m.name }}</h4>
+                  <span 
+                    v-if="m.is_active" 
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                    当前激活
+                  </span>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                  <span>URL: {{ m.base_url }}</span>
+                  <span>Model: {{ m.model_name }}</span>
+                  <span>Key: {{ m.masked_api_key }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 操作按钮组 -->
+            <div class="flex items-center gap-2 self-end sm:self-auto">
+              <button 
+                @click="testModelConnection(m.id)" 
+                class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center gap-1 transition">
+                <i data-lucide="activity" class="w-3.5 h-3.5 text-cyan-500"></i>
+                <span>测试连接</span>
+              </button>
+
+              <button 
+                v-if="!m.is_active" 
+                @click="activateModel(m.id)" 
+                class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-brand-600 dark:text-brand-400 border border-indigo-200 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition">
+                设为默认
+              </button>
+
+              <button 
+                @click="openEditModelModal(m)" 
+                title="编辑参数"
+                class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition">
+                <i data-lucide="edit-2" class="w-4 h-4"></i>
+              </button>
+
+              <button 
+                @click="confirmDeleteModel(m)" 
+                title="删除配置"
+                class="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-500 transition">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ================= 模态弹窗系统 ================= -->
+
+    <!-- 1. 管理员密码认证弹窗 -->
+    <div v-if="showLoginModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div class="w-full max-w-sm bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="lock" class="w-4 h-4 text-brand-500"></i>
+            <span>管理员身份鉴权</span>
+          </h3>
+          <button @click="showLoginModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          请输入环境变量 <code>ADMIN_PASSWORD</code> 中配置的管理员密钥以执行高权限管理。
+        </p>
+        <form @submit.prevent="handleLoginSubmit" class="space-y-4">
+          <input 
+            v-model="loginInputPassword" 
+            type="password" 
+            required 
+            placeholder="输入管理员密码..." 
+            class="w-full px-3 py-2 text-sm rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white"
+          >
+          <div class="flex items-center justify-end gap-2">
+            <button 
+              type="button" 
+              @click="showLoginModal = false" 
+              class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+              取消
+            </button>
+            <button 
+              type="submit" 
+              class="px-4 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-500/20 transition">
+              确认验证
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. AI 生成发布弹窗 -->
+    <div v-if="showPublishModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div class="w-full max-w-md bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="rocket" class="w-4 h-4 text-brand-500"></i>
+            <span>发布到微应用门户</span>
+          </h3>
+          <div class="flex items-center gap-2">
+            <button 
+              type="button" 
+              @click="aiGeneratePublishMetadata" 
+              :disabled="isExtractingMetadata"
+              title="根据右侧生成的代码自动让 AI 提取优化标题与简介"
+              class="px-2.5 py-1 text-[11px] rounded-lg bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800/60 hover:bg-brand-100 dark:hover:bg-brand-900/60 flex items-center gap-1 font-semibold transition">
+              <i v-if="isExtractingMetadata" data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>
+              <i v-else data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i>
+              <span>AI 提炼信息</span>
+            </button>
+            <button @click="showPublishModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+        <form @submit.prevent="handlePublishAiApp" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">应用 Slug (路径)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-slate-400">/s/</span>
+              <input v-model="publishSlug" type="text" required placeholder="my-ai-tool" class="w-full pl-8 pr-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">应用名称</label>
+            <input v-model="publishTitle" type="text" required placeholder="例如：赛博朋克番茄钟" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">分类</label>
+              <input v-model="publishCategory" type="text" placeholder="效率工具" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span>图标 Emoji</span>
+                <span class="text-[10px] text-slate-400 font-normal">点击选择</span>
+              </label>
+              <div class="relative">
+                <div class="flex items-center gap-1.5">
+                  <button 
+                    type="button" 
+                    @click="toggleIconPicker('publish')" 
+                    class="w-9 h-8 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-500/50 flex items-center justify-center text-base shadow-sm transition active:scale-95 flex-shrink-0">
+                    {{ publishIcon || '🚀' }}
+                  </button>
+                  <input 
+                    v-model="publishIcon" 
+                    type="text" 
+                    placeholder="⏱️" 
+                    class="w-full px-2.5 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
+                  >
+                  <button 
+                    type="button" 
+                    @click="toggleIconPicker('publish')" 
+                    class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex-shrink-0 transition">
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+
+                <!-- 下拉选择浮层面板 -->
+                <div 
+                  v-if="activeIconPicker === 'publish'" 
+                  class="absolute z-50 right-0 sm:left-0 sm:right-auto sm:w-64 mt-1 p-2.5 rounded-2xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 shadow-2xl backdrop-blur-xl animate-fade-in">
+                  <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 px-1">
+                    <span>精选图标</span>
+                    <button type="button" @click="activeIconPicker = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                      <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                  </div>
+                  <div class="max-h-48 overflow-y-auto space-y-2 pr-1">
+                    <div v-for="group in emojiGroups" :key="group.name">
+                      <div class="text-[10px] font-semibold text-slate-400 mb-0.5 px-1">{{ group.name }}</div>
+                      <div class="grid grid-cols-6 gap-1">
+                        <button 
+                          v-for="e in group.emojis" 
+                          :key="e" 
+                          type="button" 
+                          @click="selectIcon('publish', e)"
+                          :class="publishIcon === e ? 'bg-brand-500/20 border-brand-500 scale-105' : 'hover:bg-slate-100 dark:hover:bg-slate-800 border-transparent'"
+                          class="w-7 h-7 rounded-lg border flex items-center justify-center text-sm hover:scale-110 active:scale-95 transition">
+                          {{ e }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">简介说明</label>
+            <textarea v-model="publishDesc" rows="2" placeholder="应用核心功能与亮点说明..." class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"></textarea>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" @click="showPublishModal = false" class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">取消</button>
+            <button type="submit" class="px-5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-500/20">确认发布</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 3. 编辑微应用元数据弹窗 -->
+    <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div class="w-full max-w-md bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="edit-3" class="w-4 h-4 text-brand-500"></i>
+            <span>编辑应用元信息</span>
+          </h3>
+          <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <form @submit.prevent="handleEditSubmit" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">应用名称</label>
+            <input v-model="editForm.title" type="text" required class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">分类</label>
+              <input v-model="editForm.category" type="text" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center justify-between">
+                <span>图标 Emoji</span>
+                <span class="text-[10px] text-slate-400 font-normal">点击选择</span>
+              </label>
+              <div class="relative">
+                <div class="flex items-center gap-1.5">
+                  <button 
+                    type="button" 
+                    @click="toggleIconPicker('edit')" 
+                    class="w-9 h-8 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-500/50 flex items-center justify-center text-base shadow-sm transition active:scale-95 flex-shrink-0">
+                    {{ editForm.icon || '🚀' }}
+                  </button>
+                  <input 
+                    v-model="editForm.icon" 
+                    type="text" 
+                    class="w-full px-2.5 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
+                  >
+                  <button 
+                    type="button" 
+                    @click="toggleIconPicker('edit')" 
+                    class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex-shrink-0 transition">
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+
+                <!-- 下拉选择浮层面板 -->
+                <div 
+                  v-if="activeIconPicker === 'edit'" 
+                  class="absolute z-50 right-0 sm:left-0 sm:right-auto sm:w-64 mt-1 p-2.5 rounded-2xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 shadow-2xl backdrop-blur-xl animate-fade-in">
+                  <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 px-1">
+                    <span>精选图标</span>
+                    <button type="button" @click="activeIconPicker = null" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                      <i data-lucide="x" class="w-3 h-3"></i>
+                    </button>
+                  </div>
+                  <div class="max-h-48 overflow-y-auto space-y-2 pr-1">
+                    <div v-for="group in emojiGroups" :key="group.name">
+                      <div class="text-[10px] font-semibold text-slate-400 mb-0.5 px-1">{{ group.name }}</div>
+                      <div class="grid grid-cols-6 gap-1">
+                        <button 
+                          v-for="e in group.emojis" 
+                          :key="e" 
+                          type="button" 
+                          @click="selectIcon('edit', e)"
+                          :class="editForm.icon === e ? 'bg-brand-500/20 border-brand-500 scale-105' : 'hover:bg-slate-100 dark:hover:bg-slate-800 border-transparent'"
+                          class="w-7 h-7 rounded-lg border flex items-center justify-center text-sm hover:scale-110 active:scale-95 transition">
+                          {{ e }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">简介说明</label>
+            <textarea v-model="editForm.description" rows="3" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"></textarea>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" @click="showEditModal = false" class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">取消</button>
+            <button type="submit" class="px-5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-500/20">保存修改</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 4. 重新上传/覆盖代码弹窗 -->
+    <div v-if="showOverwriteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div class="w-full max-w-lg bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="refresh-cw" class="w-4 h-4 text-indigo-500"></i>
+            <span>覆盖更新应用资源: /s/{{ overwriteAppSlug }}/</span>
+          </h3>
+          <button @click="showOverwriteModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div class="border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer border-slate-300 dark:border-slate-800 hover:border-brand-500 transition relative">
+            <input type="file" accept=".html,.htm,.zip" @change="handleSelectOverwriteTarget" class="absolute inset-0 opacity-0 cursor-pointer">
+            <i data-lucide="upload" class="w-8 h-8 text-indigo-500 mx-auto mb-2"></i>
+            <p v-if="overwriteFileName" class="text-xs font-bold text-emerald-500">已选择文件: {{ overwriteFileName }}</p>
+            <p v-else class="text-xs font-semibold text-slate-700 dark:text-slate-300">点击上传替换文件 (.html 或 .zip 压缩包)</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">或直接粘贴新的 HTML 源码覆盖</label>
+            <textarea v-model="overwriteCodeText" rows="5" placeholder="<!DOCTYPE html>...在此粘贴新源码覆盖原 index.html..." class="w-full p-3 text-xs font-mono rounded-xl bg-slate-900 text-emerald-400 border border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" @click="showOverwriteModal = false" class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">取消</button>
+            <button @click="submitOverwrite" :disabled="isSubmitting" class="px-5 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20">确认覆盖更新</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 新增/编辑模型配置弹窗 -->
+    <div v-if="showModelModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div class="w-full max-w-md bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="cpu" class="w-4 h-4 text-brand-500"></i>
+            <span>{{ modelForm.id ? '编辑模型配置' : '添加 OpenAI 兼容模型' }}</span>
+          </h3>
+          <button @click="showModelModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <form @submit.prevent="handleSaveModelSubmit" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">友好标识名称</label>
+            <input v-model="modelForm.name" type="text" required placeholder="例如：DeepSeek V3 (官方接口)" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Base URL (兼容端点)</label>
+            <input v-model="modelForm.base_url" type="url" required placeholder="https://api.openai.com/v1" class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">API Key</label>
+            <input v-model="modelForm.api_key" type="password" :placeholder="modelForm.id ? '留空表示不修改已存储密钥' : 'sk-...'" class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">调用的 Model 标识</label>
+            <input v-model="modelForm.model_name" type="text" required placeholder="gpt-4o 或 deepseek-chat" class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+          <div class="flex items-center gap-2">
+            <input v-model="modelForm.is_active" type="checkbox" id="isActiveCheck" class="rounded text-brand-600 focus:ring-brand-500">
+            <label for="isActiveCheck" class="text-xs text-slate-700 dark:text-slate-300">设为当前激活使用的模型</label>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button type="button" @click="showModelModal = false" class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">取消</button>
+            <button type="submit" class="px-5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-500/20">保存配置</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 6. 微应用历史版本快照与回滚弹窗 -->
+    <div v-if="showVersionsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div class="w-full max-w-2xl bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-darkBorder pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500">
+              <i data-lucide="history" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                版本历史与快照回滚
+              </h3>
+              <p class="text-xs text-slate-400 font-mono">/s/{{ currentVersionApp?.slug }}/ ({{ currentVersionApp?.title }})</p>
+            </div>
+          </div>
+          <button @click="showVersionsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div v-if="loadingVersions" class="py-12 text-center text-slate-400">
+          <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-brand-500"></i>
+          <p class="text-xs">正在获取快照版本历史...</p>
+        </div>
+
+        <div v-else-if="versionsList.length === 0" class="py-12 text-center text-slate-400">
+          <p class="text-sm">暂无历史快照版本记录</p>
+          <p class="text-xs text-slate-500 mt-1">应用在初次发布或覆盖更新时会自动记录快照</p>
+        </div>
+
+        <div v-else class="flex-1 overflow-y-auto space-y-3 pr-1">
+          <div 
+            v-for="ver in versionsList" 
+            :key="ver.id"
+            class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 hover:border-brand-500/40 transition">
+            <div class="flex items-center gap-3">
+              <span class="px-2.5 py-1 rounded-lg font-mono text-xs font-bold bg-brand-500/10 text-brand-500 dark:text-brand-400 border border-brand-500/20">
+                v{{ ver.version_num }}
+              </span>
+              <div>
+                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <span>{{ ver.description || '快照备份' }}</span>
+                  <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-500">
+                    {{ ver.entry_type }}
+                  </span>
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5">
+                  记录时间: {{ formatDate(ver.created_at) }}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button 
+                @click="previewVersion(ver)" 
+                class="px-2.5 py-1.5 text-xs rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1 transition">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                <span>预览</span>
+              </button>
+              <button 
+                @click="rollbackToVersion(ver)" 
+                :disabled="isSubmitting"
+                class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1 transition shadow-sm">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                <span>一键回滚</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. 智能体、n8n 与数据采集表单生成向导弹窗 -->
+    <div v-if="showGeneratorModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div class="w-full max-w-2xl bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl flex flex-col max-h-[90vh]">
+        <!-- 弹窗头部 -->
+        <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-darkBorder pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <i data-lucide="wand-2" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                智能微应用向导
+              </h3>
+              <p class="text-xs text-slate-400">快速生成专属 AI 智能体、n8n 自动化流看板或在线数据采集表单</p>
+            </div>
+          </div>
+          <button @click="showGeneratorModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- 3 个生成类型 Tab -->
+        <div class="flex border-b border-slate-200 dark:border-darkBorder mb-5">
+          <button 
+            @click="generatorTab = 'agent'" 
+            :class="generatorTab === 'agent' ? 'border-b-2 border-brand-500 text-brand-600 dark:text-brand-400 font-bold' : 'text-slate-500 hover:text-slate-700'"
+            class="px-4 py-2 text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="bot" class="w-4 h-4"></i>
+            <span>🤖 AI 对话智能体</span>
+          </button>
+          <button 
+            @click="generatorTab = 'n8n'" 
+            :class="generatorTab === 'n8n' ? 'border-b-2 border-brand-500 text-brand-600 dark:text-brand-400 font-bold' : 'text-slate-500 hover:text-slate-700'"
+            class="px-4 py-2 text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            <span>⚡ n8n 自动化流</span>
+          </button>
+          <button 
+            @click="generatorTab = 'form'" 
+            :class="generatorTab === 'form' ? 'border-b-2 border-brand-500 text-brand-600 dark:text-brand-400 font-bold' : 'text-slate-500 hover:text-slate-700'"
+            class="px-4 py-2 text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            <span>📝 数据采集表单</span>
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto pr-1 space-y-4">
+          <!-- 向导 1: AI 对话智能体 (支持快速 AI 构思、单项输入 AI 扩写及 MCP/API/Skills 高级扩展) -->
+          <div v-show="generatorTab === 'agent'" class="space-y-4">
+            
+            <!-- 快速 AI 全套构思栏 -->
+            <div class="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-50/90 via-brand-50/70 to-cyan-50/80 dark:from-brand-900/40 dark:via-indigo-900/30 dark:to-cyan-900/30 border border-indigo-200/80 dark:border-brand-500/30 space-y-2.5 shadow-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-indigo-700 dark:text-brand-300 flex items-center gap-1.5">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-500 dark:text-cyan-400"></i>
+                  <span>AI 极速构思整套智能体</span>
+                </span>
+                <span class="text-[10px] text-slate-500 dark:text-slate-400">输入一句话，自动填充所有配置与工具</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <input 
+                  v-model="quickAgentIdea" 
+                  @keydown.enter="triggerFastAgentSuite"
+                  type="text" 
+                  placeholder="例如：能够根据自然语言需求生成 n8n 工作流并发布到 n8n API 的架构师" 
+                  class="flex-1 px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-950/80 border border-indigo-200 dark:border-slate-700 focus:border-brand-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none shadow-xs"
+                >
+                <button 
+                  @click="triggerFastAgentSuite" 
+                  :disabled="isGeneratingField"
+                  class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white flex items-center gap-1.5 shadow-md shadow-brand-500/25 active:scale-95 transition disabled:opacity-50 shrink-0">
+                  <i v-if="isGeneratingField" data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                  <i v-else data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-200"></i>
+                  <span>一键构思</span>
+                </button>
+              </div>
+
+              <!-- 快捷预设模版标签 -->
+              <div class="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                <span class="text-slate-500 dark:text-slate-400">推荐模版:</span>
+                <button @click="applyAgentPreset('n8n')" class="px-2.5 py-0.5 rounded-full bg-white dark:bg-slate-800 hover:bg-orange-50 dark:hover:bg-orange-500/20 text-orange-600 dark:text-orange-300 border border-orange-200 dark:border-orange-500/30 transition flex items-center gap-1 shadow-xs">
+                  <span>⚡ n8n 工作流架构师</span>
+                </button>
+                <button @click="applyAgentPreset('law')" class="px-2.5 py-0.5 rounded-full bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 transition flex items-center gap-1 shadow-xs">
+                  <span>⚖️ 法律合规顾问</span>
+                </button>
+                <button @click="applyAgentPreset('sql')" class="px-2.5 py-0.5 rounded-full bg-white dark:bg-slate-800 hover:bg-cyan-50 dark:hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30 transition flex items-center gap-1 shadow-xs">
+                  <span>📊 数据分析与SQL专家</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 智能体基础信息 -->
+            <div class="grid grid-cols-3 gap-3">
+              <div class="col-span-2">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">智能体名称</label>
+                  <button @click="aiPolishField('title')" class="text-[10px] text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 font-medium flex items-center gap-0.5 transition">
+                    <i data-lucide="sparkles" class="w-3 h-3"></i> AI 推荐名称
+                  </button>
+                </div>
+                <input v-model="agentForm.title" type="text" placeholder="例如：法务合规咨询助手" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">图标 Emoji</label>
+                <input v-model="agentForm.icon" type="text" class="w-full px-3 py-2 text-xs text-center rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">助手功能简介</label>
+                <button @click="aiPolishField('description')" class="text-[10px] text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 font-medium flex items-center gap-0.5 transition">
+                  <i data-lucide="sparkles" class="w-3 h-3"></i> AI 生成简介
+                </button>
+              </div>
+              <input v-model="agentForm.description" type="text" placeholder="专注于合同审查与法规条款解答的专业顾问" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">角色设定 (System Prompt)</label>
+                <button @click="aiPolishField('prompt')" class="text-[10px] text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 font-medium flex items-center gap-0.5 transition">
+                  <i data-lucide="sparkles" class="w-3 h-3"></i> AI 深度扩写提示词
+                </button>
+              </div>
+              <textarea v-model="agentForm.system_prompt" rows="4" placeholder="你是一位资深律师，专注于公司法与合同审核..." class="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">初始欢迎语</label>
+              <input v-model="agentForm.welcome_message" type="text" placeholder="您好！请问有哪份合同或法律条款需要我协助审查？" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">快捷引导提问 (以中文顿号、逗号或换行分隔)</label>
+              <input v-model="agentForm.quick_prompts_text" type="text" placeholder="常见劳动纠纷如何防范，如何草拟保密协议NDA，审查违约金条款" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            </div>
+
+            <!-- 高级功能扩展：Skills 技能包 / API 接入 / MCP 工具 -->
+            <div class="border border-slate-200 dark:border-slate-800 rounded-2xl p-3 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+              <div class="flex items-center justify-between cursor-pointer" @click="showAdvancedExtensions = !showAdvancedExtensions">
+                <span class="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i>
+                  <span>高级扩展功能 (Skills 技能挂载 / API 接入 / MCP 服务)</span>
+                </span>
+                <i :data-lucide="showAdvancedExtensions ? 'chevron-up' : 'chevron-down'" class="w-4 h-4 text-slate-400"></i>
+              </div>
+
+              <div v-show="showAdvancedExtensions" class="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-800 text-xs">
+                <!-- 1. Skills 技能挂载 -->
+                <div>
+                  <label class="block font-semibold text-slate-400 mb-1.5">挂载专属领域技能 (Skills)</label>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-800 cursor-pointer">
+                      <input type="checkbox" value="n8n-workflow-spec" v-model="agentForm.skills" class="rounded text-brand-600">
+                      <div>
+                        <div class="font-semibold text-slate-800 dark:text-slate-200">n8n 工作流架构规范</div>
+                        <div class="text-[10px] text-slate-400">注入节点连接、表达式与 JSON 格式标准</div>
+                      </div>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-800 cursor-pointer">
+                      <input type="checkbox" value="json-schema-validation" v-model="agentForm.skills" class="rounded text-brand-600">
+                      <div>
+                        <div class="font-semibold text-slate-800 dark:text-slate-200">严格 JSON 参数校验</div>
+                        <div class="text-[10px] text-slate-400">规范输出属性、双引号及 RFC 8259 语法</div>
+                      </div>
+                    </label>
+                    <label class="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-800 cursor-pointer">
+                      <input type="checkbox" value="cron-trigger-rules" v-model="agentForm.skills" class="rounded text-brand-600">
+                      <div>
+                        <div class="font-semibold text-slate-800 dark:text-slate-200">Cron 定时规则专家</div>
+                        <div class="text-[10px] text-slate-400">规范 5/6 段表达式时间计算与校验</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- 2. API 工具接入 (Tools) -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="block font-semibold text-slate-500 dark:text-slate-400">API 工具接入 (Tools)</label>
+                    <button type="button" @click="addToolToAgent" class="text-[11px] text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-semibold">+ 添加 API 工具</button>
+                  </div>
+                  <div v-if="agentForm.tools.length === 0" class="text-[11px] text-slate-500 py-1">
+                    暂未接入自定义外部 API 工具，点击上方可添加（如接入 n8n REST API 创建工作流）。
+                  </div>
+                  <div v-else class="space-y-2">
+                    <div v-for="(tool, tIdx) in agentForm.tools" :key="tIdx" class="p-2.5 rounded-xl bg-slate-50 dark:bg-darkCard border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
+                      <div class="flex items-center justify-between">
+                        <input v-model="tool.label" placeholder="工具名称 (如: 创建 n8n 工作流)" class="font-semibold bg-transparent text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 outline-none w-1/2">
+                        <div class="flex items-center gap-2">
+                          <select v-model="tool.method" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] rounded px-1.5 py-0.5 text-slate-700 dark:text-slate-300 outline-none">
+                            <option value="POST">POST</option>
+                            <option value="GET">GET</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                          </select>
+                          <button type="button" @click="removeToolFromAgent(tIdx)" class="text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 p-0.5">
+                            <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <input v-model="tool.endpoint" placeholder="API 请求地址，如 https://n8n.your-domain.com/api/v1/workflows" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] font-mono text-slate-700 dark:text-slate-300 outline-none">
+                      <input v-model="tool.description" placeholder="工具用途说明指导大模型调用" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-[11px] text-slate-600 dark:text-slate-400 outline-none">
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 向导 2: n8n 自动化流应用 -->
+          <div v-show="generatorTab === 'n8n'" class="space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">应用名称</label>
+                <input v-model="n8nForm.title" type="text" placeholder="例如：用户增长分析看板" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">运行模式</label>
+                <select v-model="n8nForm.mode" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                  <option value="chat">n8n Chat 聊天嵌入全屏</option>
+                  <option value="webhook">Webhook 参数触发与结果回显看板</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">n8n Webhook 或 Chat URL</label>
+              <input v-model="n8nForm.webhook_url" type="url" placeholder="https://n8n.your-domain.com/webhook/..." class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            </div>
+            <div v-if="n8nForm.mode === 'webhook'">
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">HTTP 请求方式</label>
+              <select v-model="n8nForm.http_method" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <option value="POST">POST (默认，传 JSON Payload)</option>
+                <option value="GET">GET (传 Query 参数)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 向导 3: 数据采集表单生成 -->
+          <div v-show="generatorTab === 'form'" class="space-y-4">
+            <div class="flex items-center gap-4 text-xs font-medium">
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" v-model="formMode" value="prompt" class="text-brand-600">
+                <span>需求描述推导生成</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" v-model="formMode" value="file" class="text-brand-600">
+                <span>上传 CSV/Excel 自动推断</span>
+              </label>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+              <div class="col-span-2">
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">表单名称</label>
+                <input v-model="customForm.title" type="text" placeholder="例如：新员工入职信息登记表" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">图标 Emoji</label>
+                <input v-model="customForm.icon" type="text" class="w-full px-3 py-2 text-xs text-center rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              </div>
+            </div>
+
+            <div v-if="formMode === 'prompt'">
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">所需字段与功能需求描述</label>
+              <textarea v-model="customForm.prompt" rows="3" placeholder="例如：包含姓名、身份证号、紧急联系电话、入职日期、学历、期望薪资、是否需要员工宿舍" class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800"></textarea>
+            </div>
+
+            <div v-else>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">选择表格模板 (.csv / .xlsx)</label>
+              <input type="file" accept=".csv,.xlsx,.xls" @change="handleFormTableFileChange" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-600 file:text-white hover:file:bg-brand-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">提交数据转发 Webhook (可选)</label>
+              <input v-model="customForm.webhook_url" type="url" placeholder="如飞书机器人、n8n Webhook 或自有后端 API 地址" class="w-full px-3 py-2 text-xs font-mono rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部提交操作栏 -->
+        <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-darkBorder mt-4">
+          <button 
+            type="button" 
+            @click="showGeneratorModal = false" 
+            class="px-4 py-2 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            取消
+          </button>
+          <button 
+            @click="submitGenerate(false)" 
+            :disabled="isGeneratingApp" 
+            class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 shadow-sm active:scale-95 transition disabled:opacity-50">
+            <i data-lucide="eye" class="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"></i>
+            <span>生成并在工坊预览</span>
+          </button>
+          <button 
+            @click="submitGenerate(true)" 
+            :disabled="isGeneratingApp" 
+            class="px-5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-500/25 flex items-center gap-1.5 active:scale-95 transition disabled:opacity-50">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            <span>直接发布到广场</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. 表单已收集数据查看与导出弹窗 -->
+    <div v-if="showSubmissionsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div class="w-full max-w-4xl bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-darkBorder pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500">
+              <i data-lucide="database" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                表单已采集数据记录
+              </h3>
+              <p class="text-xs text-slate-400 font-mono">/s/{{ currentSubmissionsApp?.slug }}/ (共 {{ submissionsTotal }} 条入库记录)</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button 
+              @click="exportSubmissionsCsv(currentSubmissionsApp?.slug)" 
+              class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1.5 transition shadow-sm">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>导出 CSV 报表</span>
+            </button>
+            <button @click="showSubmissionsModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="loadingSubmissions" class="py-12 text-center text-slate-400">
+          <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-500"></i>
+          <p class="text-xs">正在查询数据库中的提交记录...</p>
+        </div>
+
+        <div v-else-if="submissionsList.length === 0" class="py-12 text-center text-slate-400">
+          <p class="text-sm font-semibold">暂无任何用户提交的数据</p>
+          <p class="text-xs text-slate-500 mt-1">当用户在前端微应用填写并提交表单后，数据将实时保存在此</p>
+        </div>
+
+        <div v-else class="flex-1 overflow-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-2.5 px-3 whitespace-nowrap">ID</th>
+                <th class="py-2.5 px-3 whitespace-nowrap">提交时间</th>
+                <th class="py-2.5 px-3 whitespace-nowrap">提交 IP</th>
+                <th class="py-2.5 px-3">填报数据明细</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              <tr v-for="item in submissionsList" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="py-2.5 px-3 font-mono text-slate-400">#{{ item.id }}</td>
+                <td class="py-2.5 px-3 whitespace-nowrap text-slate-500">{{ item.created_at }}</td>
+                <td class="py-2.5 px-3 whitespace-nowrap font-mono text-slate-400">{{ item.ip_address || '-' }}</td>
+                <td class="py-2.5 px-3">
+                  <div class="flex flex-wrap gap-1.5">
+                    <span 
+                      v-for="(val, key) in item.data" 
+                      :key="key"
+                      class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                      <strong class="text-slate-500 dark:text-slate-400">{{ key }}:</strong> {{ val }}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. Google AI Studio 经典特性: </> Get Code 生产级代码导出弹窗 -->
+    <div v-if="showGetCodeModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div class="w-full max-w-3xl bg-white dark:bg-darkCard rounded-3xl border border-slate-200 dark:border-darkBorder p-6 shadow-2xl flex flex-col max-h-[85vh]">
+        <!-- 头部 -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-darkBorder mb-4">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-brand-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+              <i data-lucide="code-2" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Get Code</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">Production Ready</span>
+              </h3>
+              <p class="text-xs text-slate-400">一键获取当前 Prompt、System Instructions 与参数配置的生产级代码</p>
+            </div>
+          </div>
+          <button @click="showGetCodeModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- 语言切换选项卡与操作 -->
+        <div class="flex items-center justify-between mb-3 text-xs">
+          <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+            <button 
+              @click="getCodeLang = 'curl'" 
+              :class="getCodeLang === 'curl' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+              class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <span>cURL (Bash)</span>
+            </button>
+            <button 
+              @click="getCodeLang = 'python'" 
+              :class="getCodeLang === 'python' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+              class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <span>Python (Async HTTPX)</span>
+            </button>
+            <button 
+              @click="getCodeLang = 'js'" 
+              :class="getCodeLang === 'js' ? 'bg-white dark:bg-darkCard text-brand-600 dark:text-brand-400 font-bold shadow-xs' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+              class="px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+              <span>JavaScript (Fetch API)</span>
+            </button>
+          </div>
+
+          <button 
+            @click="copySnippetCode" 
+            class="px-3 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>复制代码</span>
+          </button>
+        </div>
+
+        <!-- 代码高亮展示区 -->
+        <div class="flex-1 overflow-auto rounded-2xl bg-slate-950 border border-slate-800 p-4 text-xs font-mono text-emerald-400 leading-relaxed relative">
+          <pre><code class="break-words whitespace-pre">{{ currentSnippetCode }}</code></pre>
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 dark:border-darkBorder mt-4 flex items-center justify-between text-[11px] text-slate-400">
+          <span>注意：代码需携带管理员凭证 Header <code class="px-1 rounded bg-slate-100 dark:bg-slate-800 font-mono">X-Admin-Token</code></span>
+          <button @click="showGetCodeModal = false" class="px-4 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition">
+            关闭
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 全局 Toast 提示组件 -->
+    <div class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none">
+      <div 
+        v-for="toast in toasts" 
+        :key="toast.id" 
+        :class="{
+          'bg-emerald-600 text-white': toast.type === 'success',
+          'bg-red-600 text-white': toast.type === 'error',
+          'bg-indigo-600 text-white': toast.type === 'info',
+        }"
+        class="pointer-events-auto px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs font-medium animate-bounce-short">
+        <i :data-lucide="toast.type === 'success' ? 'check-circle' : (toast.type === 'error' ? 'alert-circle' : 'info')" class="w-4 h-4"></i>
+        <span>{{ toast.message }}</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Vue 3 前端业务逻辑脚本 -->
+  <script>
+    const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
+
+    createApp({
+      setup() {
+        // 主题设置
+        const isDark = ref(localStorage.getItem('liteapp_theme') !== 'light');
+        const toggleTheme = () => {
+          isDark.value = !isDark.value;
+          localStorage.setItem('liteapp_theme', isDark.value ? 'dark' : 'light');
+        };
+
+        // 导航 Tab 路由识别与同步: 'portal' | 'ai' | 'upload' | 'settings'
+        const parseTabFromLocation = () => {
+          const path = window.location.pathname.toLowerCase();
+          const hash = window.location.hash.toLowerCase().replace('#', '').replace('/', '');
+          if (path.includes('ai') || path.includes('studio') || path.includes('workbench') || hash === 'ai' || hash === 'studio') {
+            return 'ai';
+          }
+          if (path.includes('upload') || hash === 'upload') {
+            return 'upload';
+          }
+          if (path.includes('settings') || path.includes('model') || hash === 'settings') {
+            return 'settings';
+          }
+          return 'portal';
+        };
+
+        const currentTab = ref(parseTabFromLocation());
+
+        // 鉴权状态
+        const isAdmin = ref(false);
+        const adminToken = ref(localStorage.getItem('liteapp_admin_token') || '');
+        const showLoginModal = ref(false);
+        const loginInputPassword = ref('');
+
+        const checkAuth = async () => {
+          if (!adminToken.value) {
+            isAdmin.value = false;
+            return;
+          }
+          try {
+            const res = await fetch('/api/auth/status', {
+              headers: { 'X-Admin-Token': adminToken.value }
+            });
+            const data = await res.json();
+            isAdmin.value = !!data.authenticated;
+          } catch (e) {
+            isAdmin.value = false;
+          }
+        };
+
+        const openLoginModal = () => {
+          loginInputPassword.value = '';
+          showLoginModal.value = true;
+          nextTick(() => lucide.createIcons());
+        };
+
+        const handleLoginSubmit = async () => {
+          try {
+            const res = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: loginInputPassword.value })
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '密码错误', 'error');
+              return;
+            }
+            const data = await res.json();
+            adminToken.value = data.token;
+            localStorage.setItem('liteapp_admin_token', data.token);
+            isAdmin.value = true;
+            showLoginModal.value = false;
+            showToast('管理员鉴权成功！', 'success');
+          } catch (e) {
+            showToast('登录请求失败: ' + e.message, 'error');
+          }
+        };
+
+        const handleLogout = () => {
+          adminToken.value = '';
+          localStorage.removeItem('liteapp_admin_token');
+          isAdmin.value = false;
+          showToast('已安全退出管理登录', 'info');
+        };
+
+        // Toast 消息队列
+        const toasts = ref([]);
+        const showToast = (message, type = 'success') => {
+          const id = Date.now() + Math.random();
+          toasts.value.push({ id, message, type });
+          setTimeout(() => {
+            toasts.value = toasts.value.filter(t => t.id !== id);
+          }, 3500);
+          nextTick(() => lucide.createIcons());
+        };
+
+        // ================= 模块 1: 应用广场 =================
+        const apps = ref([]);
+        const categories = ref([]);
+        const allAppsCount = ref(0);
+        const selectedCategory = ref('全部');
+        const searchQuery = ref('');
+        const loadingApps = ref(false);
+
+        const fetchApps = async () => {
+          loadingApps.value = true;
+          try {
+            const params = new URLSearchParams();
+            if (selectedCategory.value && selectedCategory.value !== '全部') {
+              params.append('category', selectedCategory.value);
+            }
+            if (searchQuery.value && searchQuery.value.trim()) {
+              params.append('search', searchQuery.value.trim());
+            }
+            const res = await fetch('/api/apps?' + params.toString());
+            const data = await res.json();
+            apps.value = data.items || [];
+            categories.value = data.categories || [];
+            if (selectedCategory.value === '全部' && !searchQuery.value) {
+              allAppsCount.value = data.total || 0;
+            }
+          } catch (e) {
+            showToast('获取微应用列表失败', 'error');
+          } finally {
+            loadingApps.value = false;
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        const filterCategory = (cat) => {
+          selectedCategory.value = cat;
+          fetchApps();
+        };
+
+        let searchDebounceTimer = null;
+        const handleSearch = () => {
+          clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = setTimeout(() => {
+            fetchApps();
+          }, 300);
+        };
+
+        const openApp = (slug) => {
+          window.open(`/s/${slug}/`, '_blank');
+        };
+
+        const copyShareLink = async (slug) => {
+          const fullUrl = `${window.location.origin}/s/${slug}/`;
+          try {
+            await navigator.clipboard.writeText(fullUrl);
+            showToast('完整微应用链接已复制到剪贴板！', 'success');
+          } catch (e) {
+            showToast('复制失败，请手动复制: ' + fullUrl, 'info');
+          }
+        };
+
+        // 编辑元信息弹窗
+        const showEditModal = ref(false);
+        const editForm = ref({ slug: '', title: '', description: '', category: '', icon: '' });
+        const openEditModal = (app) => {
+          editForm.value = { ...app };
+          showEditModal.value = true;
+          nextTick(() => lucide.createIcons());
+        };
+        const handleEditSubmit = async () => {
+          try {
+            const res = await fetch(`/api/apps/${editForm.value.slug}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value,
+              },
+              body: JSON.stringify(editForm.value),
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '修改失败', 'error');
+              return;
+            }
+            showToast('微应用元信息更新成功！', 'success');
+            showEditModal.value = false;
+            fetchApps();
+          } catch (e) {
+            showToast('网络请求异常', 'error');
+          }
+        };
+
+        // 重新覆盖更新弹窗
+        const showOverwriteModal = ref(false);
+        const overwriteAppSlug = ref('');
+        const overwriteFile = ref(null);
+        const overwriteFileName = ref('');
+        const overwriteCodeText = ref('');
+        const openOverwriteModal = (app) => {
+          overwriteAppSlug.value = app.slug;
+          overwriteFile.value = null;
+          overwriteFileName.value = '';
+          overwriteCodeText.value = '';
+          showOverwriteModal.value = true;
+          nextTick(() => lucide.createIcons());
+        };
+        const handleSelectOverwriteTarget = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            overwriteFile.value = file;
+            overwriteFileName.value = file.name;
+          }
+        };
+        const submitOverwrite = async () => {
+          if (!overwriteFile.value && !overwriteCodeText.value.trim()) {
+            showToast('请选择上传替换的文件或直接粘贴代码', 'info');
+            return;
+          }
+          const fd = new FormData();
+          if (overwriteFile.value) {
+            fd.append('file', overwriteFile.value);
+          } else {
+            fd.append('html_content', overwriteCodeText.value);
+          }
+          isSubmitting.value = true;
+          try {
+            const res = await fetch(`/api/apps/${overwriteAppSlug.value}/overwrite`, {
+              method: 'POST',
+              headers: { 'X-Admin-Token': adminToken.value },
+              body: fd,
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '覆盖失败', 'error');
+              return;
+            }
+            showToast(`微应用 /s/${overwriteAppSlug.value}/ 资源覆盖更新成功！`, 'success');
+            showOverwriteModal.value = false;
+            fetchApps();
+          } catch (e) {
+            showToast('网络请求失败', 'error');
+          } finally {
+            isSubmitting.value = false;
+          }
+        };
+
+        const confirmDeleteApp = async (app) => {
+          if (!confirm(`确定要彻底删除微应用 "${app.title}" (${app.slug}) 吗？磁盘上的静态文件也将一并清除。`)) {
+            return;
+          }
+          try {
+            const res = await fetch(`/api/apps/${app.slug}`, {
+              method: 'DELETE',
+              headers: { 'X-Admin-Token': adminToken.value }
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '删除失败', 'error');
+              return;
+            }
+            showToast(`微应用 "${app.title}" 已删除`, 'success');
+            fetchApps();
+          } catch (e) {
+            showToast('删除请求失败', 'error');
+          }
+        };
+
+        // ================= 二次迭代编辑与版本快照 =================
+        const editingApp = ref(null);
+
+        const editInStudio = async (app) => {
+          if (!isAdmin.value) {
+            openLoginModal();
+            return;
+          }
+          try {
+            const res = await fetch(`/api/apps/${app.slug}/source`);
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '读取应用源码失败', 'error');
+              return;
+            }
+            const data = await res.json();
+            editingApp.value = { ...app };
+            studioTitle.value = app.title || '编辑微应用';
+            generatedHtml.value = data.html_content || '';
+            chatMessages.value = [
+              {
+                role: 'assistant',
+                rawExplanation: `已载入微应用 **${app.title}** (\`/s/${app.slug}/\`) 的完整源码！\n\n您可以在左侧直接描述增量修改需求（例如："更换配色方案"、"新增导出功能"），AI 将为您进行精准二次迭代。满意后可点击右上角 **「覆盖更新原应用」** 或 **「另存为新应用」**。`,
+                hasCode: !!data.html_content,
+              }
+            ];
+            activeLeftTab.value = 'code';
+            currentTab.value = 'ai';
+            nextTick(() => {
+              updateIframeSandbox(data.html_content || '');
+              lucide.createIcons();
+            });
+            showToast(`已载入 "${app.title}" 源码，开始二次迭代`, 'success');
+          } catch (e) {
+            showToast('请求应用源码失败: ' + e.message, 'error');
+          }
+        };
+
+        const cancelEditingApp = () => {
+          editingApp.value = null;
+          showToast('已退出二次迭代模式', 'info');
+        };
+
+        const overwriteEditingApp = async () => {
+          if (!editingApp.value || !generatedHtml.value) return;
+          if (!confirm(`确定要将当前编辑的代码直接覆盖发布到 /s/${editingApp.value.slug}/ 吗？系统将自动创建快照备份。`)) {
+            return;
+          }
+          isSubmitting.value = true;
+          try {
+            const fd = new FormData();
+            fd.append('html_content', generatedHtml.value);
+            fd.append('description', '在 AI 工坊中迭代更新发布');
+            const res = await fetch(`/api/apps/${editingApp.value.slug}/overwrite`, {
+              method: 'POST',
+              headers: { 'X-Admin-Token': adminToken.value },
+              body: fd,
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '覆盖失败', 'error');
+              return;
+            }
+            showToast(`微应用 "${editingApp.value.title}" 已成功覆盖更新！`, 'success');
+            fetchApps();
+          } catch (e) {
+            showToast('覆盖更新失败: ' + e.message, 'error');
+          } finally {
+            isSubmitting.value = false;
+          }
+        };
+
+        // 版本快照与回滚
+        const showVersionsModal = ref(false);
+        const currentVersionApp = ref(null);
+        const versionsList = ref([]);
+        const loadingVersions = ref(false);
+
+        const openVersionsModal = async (app) => {
+          currentVersionApp.value = app;
+          showVersionsModal.value = true;
+          loadingVersions.value = true;
+          nextTick(() => lucide.createIcons());
+          try {
+            const res = await fetch(`/api/apps/${app.slug}/versions`);
+            if (res.ok) {
+              versionsList.value = await res.json();
+            } else {
+              versionsList.value = [];
+            }
+          } catch (e) {
+            showToast('获取历史版本失败', 'error');
+          } finally {
+            loadingVersions.value = false;
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        const previewVersion = (ver) => {
+          window.open(`/api/apps/${ver.app_slug}/versions/${ver.id}/preview`, '_blank');
+        };
+
+        const rollbackToVersion = async (ver) => {
+          if (!isAdmin.value) {
+            openLoginModal();
+            return;
+          }
+          if (!confirm(`确定要将微应用回滚至版本 v${ver.version_num} (${ver.description}) 吗？系统将在回滚前对当前状态自动进行快照备份。`)) {
+            return;
+          }
+          isSubmitting.value = true;
+          try {
+            const res = await fetch(`/api/apps/${ver.app_slug}/versions/${ver.id}/rollback`, {
+              method: 'POST',
+              headers: { 'X-Admin-Token': adminToken.value }
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '回滚失败', 'error');
+              return;
+            }
+            showToast(`已成功回滚至 v${ver.version_num} 快照！`, 'success');
+            showVersionsModal.value = false;
+            fetchApps();
+          } catch (e) {
+            showToast('回滚请求失败: ' + e.message, 'error');
+          } finally {
+            isSubmitting.value = false;
+          }
+        };
+
+        // ================= 智能微应用生成向导 =================
+        const showGeneratorModal = ref(false);
+        const generatorTab = ref('agent');
+        const isGeneratingApp = ref(false);
+        const quickAgentIdea = ref('');
+        const isGeneratingField = ref(false);
+        const showAdvancedExtensions = ref(false);
+
+        const agentForm = ref({
+          title: '法务合规咨询助手',
+          icon: '🤖',
+          description: '合同审查与法律法规咨询专家',
+          system_prompt: '你是一位资深法律顾问与合规专家，专注于公司法、合同审核与劳动争议化解。请用专业严谨、逻辑清晰的中文解答用户的法律疑问。',
+          welcome_message: '您好！我是您的专属法务合规智能助手。请问今天有哪份合同或法律条款需要我协助审查？',
+          quick_prompts_text: '常见合同条款审查要点，保密协议NDA模板要领，劳动纠纷解除赔偿标准',
+          skills: [],
+          tools: [],
+          mcp_servers: []
+        });
+
+        const addToolToAgent = () => {
+          if (!agentForm.value.tools) agentForm.value.tools = [];
+          agentForm.value.tools.push({
+            name: `tool_${Date.now()}`,
+            label: '创建 n8n 工作流',
+            description: '通过 n8n API 创建并激活自动化工作流',
+            endpoint: 'https://n8n.your-domain.com/api/v1/workflows',
+            method: 'POST',
+            headers: { 'X-N8N-API-KEY': 'your-api-key-here' },
+            payload_template: ''
+          });
+          nextTick(() => lucide.createIcons());
+        };
+
+        const removeToolFromAgent = (idx) => {
+          if (agentForm.value.tools) {
+            agentForm.value.tools.splice(idx, 1);
+          }
+        };
+
+        const triggerFastAgentSuite = async () => {
+          if (!quickAgentIdea.value.trim()) {
+            showToast('请输入您希望构思的智能体简短描述', 'info');
+            return;
+          }
+          isGeneratingField.value = true;
+          try {
+            const res = await fetch('/api/ai/generate-agent-suite', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value,
+              },
+              body: JSON.stringify({
+                context: quickAgentIdea.value.trim()
+              })
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '构思生成失败', 'error');
+              return;
+            }
+            const data = await res.json();
+            if (data.title) agentForm.value.title = data.title;
+            if (data.icon) agentForm.value.icon = data.icon;
+            if (data.description) agentForm.value.description = data.description;
+            if (data.system_prompt) agentForm.value.system_prompt = data.system_prompt;
+            if (data.welcome_message) agentForm.value.welcome_message = data.welcome_message;
+            if (data.quick_prompts && data.quick_prompts.length > 0) {
+              agentForm.value.quick_prompts_text = data.quick_prompts.join('，');
+            }
+            if (data.skills && data.skills.length > 0) {
+              agentForm.value.skills = [...data.skills];
+            }
+            if (data.tools && data.tools.length > 0) {
+              agentForm.value.tools = data.tools.map(t => ({
+                name: t.name || 'tool',
+                label: t.label || t.name,
+                description: t.description || '',
+                endpoint: t.endpoint || '',
+                method: t.method || 'POST',
+                headers: t.headers || {},
+                payload_template: t.payload_template || ''
+              }));
+              showAdvancedExtensions.value = true;
+            }
+            showToast('✨ 智能体全套配置构思完成！已自动填充', 'success');
+          } catch (e) {
+            showToast('AI 构思失败: ' + e.message, 'error');
+          } finally {
+            isGeneratingField.value = false;
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        const applyAgentPreset = (type) => {
+          if (type === 'n8n') {
+            quickAgentIdea.value = '能够根据自然语言需求自动生成符合 n8n 规范的工作流 JSON 并推送到 n8n API 的架构师智能体';
+            agentForm.value = {
+              title: 'n8n 工作流架构专家',
+              icon: '⚡',
+              description: '专注生成符合 n8n 架构规范的工作流 JSON 并支持一键安全推送到 n8n API',
+              system_prompt: '你是一位资深 n8n 自动化专家与系统架构师。当用户描述业务自动化流程时，你需要设计严谨的数据流并输出合法完整的 n8n workflow JSON，确保包含 nodes 和 connections 结构，并使用 Markdown ```json 代码块包裹。',
+              welcome_message: '您好！我是 n8n 工作流架构专家。请告诉我您的自动化需求（例如：“每天早上 9 点抓取 GitHub trending 并发送邮件提醒”），我将为您生成合法的 n8n 工作流 JSON 并支持一键推送到您的 n8n 实例！',
+              quick_prompts_text: '每天定时抓取 RSS 并推送到 Webhook，监听 Webhook 过滤数据后写入数据库，定时监控网站状态并在异常时告警',
+              skills: ['n8n-workflow-spec', 'json-schema-validation'],
+              tools: [
+                {
+                  name: 'create_n8n_workflow',
+                  label: '推送到 n8n 实例 (POST /api/v1/workflows)',
+                  description: '将生成的工作流 JSON 推送到用户的私有 n8n 实例',
+                  endpoint: 'https://n8n.your-domain.com/api/v1/workflows',
+                  method: 'POST',
+                  headers: { 'X-N8N-API-KEY': 'your-api-key-here' },
+                  payload_template: ''
+                }
+              ],
+              mcp_servers: []
+            };
+            showAdvancedExtensions.value = true;
+            showToast('已加载 n8n 工作流架构师预设模版', 'info');
+          } else if (type === 'law') {
+            quickAgentIdea.value = '专注于企业合同审查与法律合规风险排查的专业律师顾问';
+            agentForm.value = {
+              title: '法务合规咨询助手',
+              icon: '⚖️',
+              description: '合同审查、劳动争议与法律合规咨询专家',
+              system_prompt: '你是一位资深法律顾问与合规专家，专注于公司法、合同审核与劳动争议化解。请用专业严谨、逻辑清晰的中文解答用户的法律疑问，分析潜在法律风险并提出修改建议。',
+              welcome_message: '您好！我是您的专属法务合规智能助手。请问今天有哪份合同或法律条款需要我协助审查？',
+              quick_prompts_text: '常见合同条款审查要点，保密协议NDA模板要领，劳动纠纷解除赔偿标准',
+              skills: [],
+              tools: [],
+              mcp_servers: []
+            };
+            showToast('已加载法务合规顾问模版', 'info');
+          } else if (type === 'sql') {
+            quickAgentIdea.value = '根据自然语言需求编写高性能 SQL 查询并生成数据分析结论的专家';
+            agentForm.value = {
+              title: '数据分析与 SQL 专家',
+              icon: '📊',
+              description: '自然语言转 SQL、查询性能优化与数据分析洞察顾问',
+              system_prompt: '你是一位资深数据工程师与 BI 分析师，精通 MySQL、PostgreSQL 和 SQLite 查询语法。用户提出业务指标统计或查询需求时，请编写高效、规范的 SQL 语句并解释其底层逻辑与索引建议。',
+              welcome_message: '您好！我是数据分析与 SQL 专家。请告诉我您的数据表结构或想要分析的业务指标，我将为您编写高性能 SQL 语句！',
+              quick_prompts_text: '统计近30天用户留存率SQL，多表关联性能优化技巧，按周统计订单GMV环比增长',
+              skills: ['json-schema-validation'],
+              tools: [],
+              mcp_servers: []
+            };
+            showToast('已加载数据分析与 SQL 专家模版', 'info');
+          }
+          nextTick(() => lucide.createIcons());
+        };
+
+        const aiPolishField = async (fieldType) => {
+          let context = '';
+          if (fieldType === 'title') {
+            context = agentForm.value.description || agentForm.value.system_prompt || agentForm.value.title || '智能助手';
+          } else if (fieldType === 'description') {
+            context = agentForm.value.title || agentForm.value.system_prompt || '智能分析与咨询助手';
+          } else if (fieldType === 'prompt') {
+            context = agentForm.value.system_prompt || agentForm.value.description || agentForm.value.title || '专业智能顾问';
+          }
+
+          isGeneratingField.value = true;
+          try {
+            const res = await fetch('/api/ai/generate-field', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value,
+              },
+              body: JSON.stringify({
+                field_type: fieldType,
+                context: context
+              })
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '生成失败', 'error');
+              return;
+            }
+            const data = await res.json();
+            if (fieldType === 'title' && data.generated_content) {
+              agentForm.value.title = data.generated_content;
+              showToast('✨ 智能体名称已更新', 'success');
+            } else if (fieldType === 'description' && data.generated_content) {
+              agentForm.value.description = data.generated_content;
+              showToast('✨ 助手简介已更新', 'success');
+            } else if (fieldType === 'prompt' && data.generated_content) {
+              agentForm.value.system_prompt = data.generated_content;
+              showToast('✨ System Prompt 已扩写优化', 'success');
+            }
+          } catch (e) {
+            showToast('AI 辅助生成失败: ' + e.message, 'error');
+          } finally {
+            isGeneratingField.value = false;
+          }
+        };
+
+        const n8nForm = ref({
+          title: 'n8n 自动化流看板',
+          icon: '⚡',
+          mode: 'chat',
+          webhook_url: 'https://n8n.your-domain.com/webhook/test',
+          http_method: 'POST'
+        });
+
+        const formMode = ref('prompt');
+        const customForm = ref({
+          title: '在线信息采集表',
+          icon: '📝',
+          prompt: '新员工入职信息登记表，包含姓名、手机号码、身份证号、入职日期、学历、期望薪资、是否需要员工宿舍',
+          webhook_url: '',
+          file: null
+        });
+
+        const openGeneratorModal = () => {
+          if (!isAdmin.value) {
+            openLoginModal();
+            return;
+          }
+          showGeneratorModal.value = true;
+          nextTick(() => lucide.createIcons());
+        };
+
+        const handleFormTableFileChange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            customForm.value.file = file;
+          }
+        };
+
+        const submitGenerate = async (autoPublish = false) => {
+          isGeneratingApp.value = true;
+          try {
+            let res;
+            if (generatorTab.value === 'agent') {
+              const quick_prompts = agentForm.value.quick_prompts_text
+                ? agentForm.value.quick_prompts_text.split(/[,，、\n]+/).map(s => s.trim()).filter(Boolean)
+                : [];
+              res = await fetch(`/api/generator/agent?auto_publish=${autoPublish}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Admin-Token': adminToken.value,
+                },
+                body: JSON.stringify({
+                  title: agentForm.value.title,
+                  icon: agentForm.value.icon,
+                  description: agentForm.value.description,
+                  system_prompt: agentForm.value.system_prompt,
+                  welcome_message: agentForm.value.welcome_message,
+                  quick_prompts: quick_prompts,
+                  tools: agentForm.value.tools || [],
+                  skills: agentForm.value.skills || [],
+                  mcp_servers: agentForm.value.mcp_servers || []
+                })
+              });
+            } else if (generatorTab.value === 'n8n') {
+              res = await fetch(`/api/generator/n8n?auto_publish=${autoPublish}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Admin-Token': adminToken.value,
+                },
+                body: JSON.stringify({
+                  title: n8nForm.value.title,
+                  icon: n8nForm.value.icon,
+                  mode: n8nForm.value.mode,
+                  webhook_url: n8nForm.value.webhook_url,
+                  http_method: n8nForm.value.http_method
+                })
+              });
+            } else if (generatorTab.value === 'form') {
+              if (formMode.value === 'file') {
+                if (!customForm.value.file) {
+                  showToast('请先选择要上传的表格模板文件', 'info');
+                  isGeneratingApp.value = false;
+                  return;
+                }
+                const fd = new FormData();
+                fd.append('file', customForm.value.file);
+                fd.append('title', customForm.value.title);
+                fd.append('icon', customForm.value.icon);
+                fd.append('description', '在线数据采集表单');
+                if (customForm.value.webhook_url) {
+                  fd.append('webhook_url', customForm.value.webhook_url);
+                }
+                fd.append('auto_publish', autoPublish ? 'true' : 'false');
+                res = await fetch('/api/generator/form-file', {
+                  method: 'POST',
+                  headers: { 'X-Admin-Token': adminToken.value },
+                  body: fd
+                });
+              } else {
+                res = await fetch(`/api/generator/form-prompt?auto_publish=${autoPublish}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Token': adminToken.value,
+                  },
+                  body: JSON.stringify({
+                    title: customForm.value.title,
+                    icon: customForm.value.icon,
+                    prompt: customForm.value.prompt,
+                    webhook_url: customForm.value.webhook_url
+                  })
+                });
+              }
+            }
+
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '生成微应用失败', 'error');
+              return;
+            }
+
+            const data = await res.json();
+            if (autoPublish) {
+              showToast(`🎉 成功直接发布微应用: "${data.title}"！`, 'success');
+              showGeneratorModal.value = false;
+              fetchApps();
+            } else {
+              generatedHtml.value = data.html_content;
+              activeLeftTab.value = 'code';
+              currentTab.value = 'ai';
+              showGeneratorModal.value = false;
+              nextTick(() => {
+                updateIframeSandbox(data.html_content);
+                lucide.createIcons();
+              });
+              showToast(`微应用已成功生成，已注入沙盒预览！`, 'success');
+            }
+          } catch (e) {
+            showToast('生成请求异常: ' + e.message, 'error');
+          } finally {
+            isGeneratingApp.value = false;
+          }
+        };
+
+        // ================= 表单数据采集记录查看 =================
+        const showSubmissionsModal = ref(false);
+        const currentSubmissionsApp = ref(null);
+        const submissionsList = ref([]);
+        const submissionsTotal = ref(0);
+        const loadingSubmissions = ref(false);
+
+        const openSubmissionsModal = async (app) => {
+          if (!isAdmin.value) {
+            openLoginModal();
+            return;
+          }
+          currentSubmissionsApp.value = app;
+          showSubmissionsModal.value = true;
+          loadingSubmissions.value = true;
+          submissionsList.value = [];
+          submissionsTotal.value = 0;
+          nextTick(() => lucide.createIcons());
+          try {
+            const res = await fetch(`/api/forms/${app.slug}/submissions`, {
+              headers: { 'X-Admin-Token': adminToken.value }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              submissionsList.value = data.items || [];
+              submissionsTotal.value = data.total || 0;
+            } else {
+              showToast('暂无已提交的数据记录', 'info');
+            }
+          } catch (e) {
+            showToast('获取表单数据失败: ' + e.message, 'error');
+          } finally {
+            loadingSubmissions.value = false;
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        const exportSubmissionsCsv = (slug) => {
+          if (!slug) return;
+          window.open(`/api/forms/${slug}/export`, '_blank');
+        };
+
+        // ================= 模块 2: AI 创客工作台 (Google AI Studio 范式) =================
+        // Google AI Studio 经典设计规范状态
+        const studioTitle = ref('未命名创意应用');
+        const isEditingStudioTitle = ref(false);
+        const studioTitleInput = ref(null);
+
+        const startEditStudioTitle = () => {
+          isEditingStudioTitle.value = true;
+          nextTick(() => {
+            if (studioTitleInput.value) {
+              studioTitleInput.value.focus();
+              studioTitleInput.value.select();
+            }
+          });
+        };
+
+        const DEFAULT_SYSTEM_INSTRUCTION = `你是一位世界顶级的资深前端架构师与全栈极客。请根据用户的需求，生成高质量、生产级且零外部构建依赖的现代单文件 HTML (Single-file HTML) 应用代码。
+要求：
+1. 包含内联样式与现代 JavaScript，优先使用 TailwindCSS CDN 与 Lucide 图标库。
+2. 零外部构建依赖，所有逻辑封装在单一 HTML 文件中。
+3. 自适应布局，交互流畅，UI 风格现代美观。
+4. 严格输出单文件 HTML 源码，使用 Markdown 的 \`\`\`html 代码块包裹。`;
+
+        const showSystemInstruction = ref(true);
+        const systemInstructionText = ref(DEFAULT_SYSTEM_INSTRUCTION);
+        const isOptimizingSystemInstruction = ref(false);
+
+        const resetSystemInstruction = () => {
+          systemInstructionText.value = DEFAULT_SYSTEM_INSTRUCTION;
+          showToast('系统指令已重置为默认设定', 'info');
+        };
+
+        const optimizeSystemInstruction = async () => {
+          if (!systemInstructionText.value.trim() || isOptimizingSystemInstruction.value) return;
+          isOptimizingSystemInstruction.value = true;
+          try {
+            const res = await fetch('/api/ai/generate-field', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value,
+              },
+              body: JSON.stringify({
+                field_type: 'prompt',
+                context: systemInstructionText.value.trim()
+              })
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '优化系统指令失败', 'error');
+              return;
+            }
+            const data = await res.json();
+            if (data.generated_content) {
+              systemInstructionText.value = data.generated_content;
+              showToast('✨ System Instructions 已由 AI 深度增强优化！', 'success');
+            }
+          } catch (e) {
+            showToast('优化系统指令异常: ' + e.message, 'error');
+          } finally {
+            isOptimizingSystemInstruction.value = false;
+          }
+        };
+
+        // Google AI Studio 右侧模式面板与运行参数
+        const rightPanelTab = ref('preview'); // 'preview' | 'settings'
+        const runSettings = ref({
+          temperature: 0.7,
+          top_p: 0.95,
+          max_tokens: 4096,
+          model_id: null,
+        });
+
+        // Google AI Studio 经典 </> Get Code 代码导出特性
+        const showGetCodeModal = ref(false);
+        const getCodeLang = ref('curl'); // 'curl' | 'python' | 'js'
+
+        const openGetCodeModal = () => {
+          showGetCodeModal.value = true;
+          nextTick(() => lucide.createIcons());
+        };
+
+        const currentSnippetCode = computed(() => {
+          const origin = window.location.origin;
+          const promptSample = promptInput.value.trim() || (chatMessages.value.find(m => m.role === 'user')?.content) || '开发一个现代极客风格的番茄钟微应用';
+          const sysInst = systemInstructionText.value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+          const userPromptEscaped = promptSample.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+          const modelIdParam = runSettings.value.model_id ? `,\n    "provider_id": ${runSettings.value.model_id}` : '';
+
+          if (getCodeLang.value === 'curl') {
+            return `curl -X POST "${origin}/api/ai/chat/stream" \\
+  -H "Content-Type: application/json" \\
+  -H "X-Admin-Token: \${ADMIN_TOKEN}" \\
+  -d '{
+    "messages": [
+      {"role": "user", "content": "${userPromptEscaped}"}
+    ],
+    "system_instruction": "${sysInst}",
+    "temperature": ${runSettings.value.temperature},
+    "top_p": ${runSettings.value.top_p},
+    "max_tokens": ${runSettings.value.max_tokens}${modelIdParam}
+  }'`;
+          } else if (getCodeLang.value === 'python') {
+            return `import asyncio
+import httpx
+
+async def main():
+    url = "${origin}/api/ai/chat/stream"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Admin-Token": "YOUR_ADMIN_TOKEN"
+    }
+    payload = {
+        "messages": [
+            {"role": "user", "content": """${promptSample}"""}
+        ],
+        "system_instruction": """${systemInstructionText.value}""",
+        "temperature": ${runSettings.value.temperature},
+        "top_p": ${runSettings.value.top_p},
+        "max_tokens": ${runSettings.value.max_tokens},${runSettings.value.model_id ? `\n        "provider_id": ${runSettings.value.model_id},` : ''}
+    }
+
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        async with client.stream("POST", url, headers=headers, json=payload) as response:
+            async for line in response.aiter_lines():
+                if line.startswith("data: "):
+                    content = line[6:].strip()
+                    if content == "[DONE]":
+                        break
+                    print(content, end="", flush=True)
+
+if __name__ == "__main__":
+    asyncio.run(main())`;
+          } else {
+            return `async function generateApp() {
+  const url = "${origin}/api/ai/chat/stream";
+  const payload = {
+    messages: [
+      { role: "user", content: ${JSON.stringify(promptSample)} }
+    ],
+    system_instruction: ${JSON.stringify(systemInstructionText.value)},
+    temperature: ${runSettings.value.temperature},
+    top_p: ${runSettings.value.top_p},
+    max_tokens: ${runSettings.value.max_tokens},${runSettings.value.model_id ? `\n    provider_id: ${runSettings.value.model_id},` : ''}
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Admin-Token": "YOUR_ADMIN_TOKEN"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value);
+    console.log(chunk);
+  }
+}
+
+generateApp();`;
+          }
+        });
+
+        const copySnippetCode = async () => {
+          try {
+            await navigator.clipboard.writeText(currentSnippetCode.value);
+            showToast('生产级代码已成功复制到剪贴板！', 'success');
+          } catch (e) {
+            showToast('复制代码失败', 'error');
+          }
+        };
+
+        const activeLeftTab = ref('chat');
+        const viewportMode = ref('desktop');
+        const chatMessages = ref([]);
+        const promptInput = ref('');
+        const isGenerating = ref(false);
+        const generatedHtml = ref('');
+        const sandboxFrame = ref(null);
+        const chatContainer = ref(null);
+
+        const presetPrompts = ref([
+          { title: '赛博朋克极简番茄钟', prompt: '创建一个带有赛博朋克深色荧光风格的番茄钟专注应用，包含 25/5 分钟工作休息切换、开始/暂停/重置控制、优雅的声波动画与本地专注历史记录。' },
+          { title: 'Markdown 简历编辑器', prompt: '创建一个实时的单文件 Markdown 简历编辑器，左侧输入 Markdown，右侧实时优雅渲染排版，支持一键切换排版主题与导出/打印 PDF 友好模式。' },
+          { title: '复古像素贪吃蛇小游戏', prompt: '用原生 HTML5 Canvas 编写一个精致耐玩、带有经典像素风音效与计分排行榜的贪吃蛇小游戏，包含难度选择、最高分保存与平滑方向控制。' },
+          { title: '多币种实时汇率换算器', prompt: '创建一个现代极客风格的多币种汇率换算与资产计算器，支持 CNY/USD/EUR/JPY 等主流货币双向实时换算，包含常用汇率卡片与换算历史记录。' },
+        ]);
+
+        const usePresetPrompt = (preset) => {
+          promptInput.value = preset.prompt;
+          sendPrompt();
+        };
+
+        const aiPolishPromptInput = async () => {
+          if (!promptInput.value.trim() || isGeneratingField.value) return;
+          isGeneratingField.value = true;
+          try {
+            const res = await fetch('/api/ai/generate-field', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value,
+              },
+              body: JSON.stringify({
+                field_type: 'prompt',
+                context: promptInput.value.trim()
+              })
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '需求扩写失败', 'error');
+              return;
+            }
+            const data = await res.json();
+            if (data.generated_content) {
+              promptInput.value = data.generated_content;
+              showToast('✨ 需求 Prompt 已由 AI 深度扩写！', 'success');
+            }
+          } catch (e) {
+            showToast('AI 扩写异常: ' + e.message, 'error');
+          } finally {
+            isGeneratingField.value = false;
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        const updateIframeSandbox = (htmlCode) => {
+          if (!sandboxFrame.value) return;
+          sandboxFrame.value.srcdoc = htmlCode;
+        };
+
+        const refreshPreview = () => {
+          if (generatedHtml.value) {
+            updateIframeSandbox(generatedHtml.value);
+            showToast('沙盒预览已刷新', 'info');
+          }
+        };
+
+        const handleCodeChange = () => {
+          updateIframeSandbox(generatedHtml.value);
+        };
+
+        const copyCode = async () => {
+          if (!generatedHtml.value) return;
+          try {
+            await navigator.clipboard.writeText(generatedHtml.value);
+            showToast('HTML 代码已复制到剪贴板！', 'success');
+          } catch (e) {
+            showToast('复制失败', 'error');
+          }
+        };
+
+        const clearChat = () => {
+          chatMessages.value = [];
+          generatedHtml.value = '';
+          updateIframeSandbox('');
+          showToast('对话流与沙盒已重置', 'info');
+        };
+
+        const openInNewTab = () => {
+          if (!generatedHtml.value) return;
+          const blob = new Blob([generatedHtml.value], { type: 'text/html;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+        };
+
+        const extractHtmlFromStream = (text) => {
+          // 尝试匹配 ```html ... ``` 代码块
+          const match = text.match(/```(?:html)?\s*([\s\S]*?)```/i);
+          if (match && match[1]) {
+            return match[1].trim();
+          }
+          // 如果本身以 <!DOCTYPE html 开头
+          if (text.trim().toLowerCase().startsWith('<!doctype html') || text.trim().toLowerCase().startsWith('<html')) {
+            return text.trim();
+          }
+          return '';
+        };
+
+        const sendPrompt = async () => {
+          if (!promptInput.value.trim() || isGenerating.value) return;
+          if (!isAdmin.value) {
+            openLoginModal();
+            showToast('AI 代码生成需要管理员凭证，请先登录', 'info');
+            return;
+          }
+
+          const userText = promptInput.value.trim();
+          chatMessages.value.push({ role: 'user', content: userText });
+          promptInput.value = '';
+
+          // 准备 AI 响应消息条目
+          const assistantMsg = {
+            role: 'assistant',
+            content: '',
+            hasCode: false,
+            rawExplanation: '',
+          };
+          chatMessages.value.push(assistantMsg);
+          isGenerating.value = true;
+
+          // 滚动到底部
+          nextTick(() => {
+            if (chatContainer.value) {
+              chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+            }
+          });
+
+          try {
+            const apiMessages = chatMessages.value.slice(0, -1).map(m => ({
+              role: m.role,
+              content: m.content
+            }));
+
+            const payload = {
+              messages: apiMessages,
+              system_instruction: systemInstructionText.value.trim() || undefined,
+              temperature: runSettings.value.temperature ?? 0.7,
+              top_p: runSettings.value.top_p ?? 0.95,
+              max_tokens: runSettings.value.max_tokens ?? 4096,
+            };
+            if (runSettings.value.model_id) {
+              payload.provider_id = runSettings.value.model_id;
+            }
+
+            const response = await fetch('/api/ai/chat/stream', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value,
+              },
+              body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+              const err = await response.json();
+              assistantMsg.content = '生成失败: ' + (err.detail || '服务端异常');
+              showToast(err.detail || '请求失败', 'error');
+              isGenerating.value = false;
+              return;
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let accumulated = '';
+
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) break;
+              const chunk = decoder.decode(value, { stream: true });
+              const lines = chunk.split('\n');
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const dataStr = line.slice(6).trim();
+                  if (dataStr === '[DONE]') {
+                    break;
+                  }
+                  try {
+                    const parsed = JSON.parse(dataStr);
+                    if (parsed.error) {
+                      assistantMsg.content += `\n[错误]: ${parsed.error}`;
+                      showToast(parsed.error, 'error');
+                    } else if (parsed.content) {
+                      accumulated += parsed.content;
+                      assistantMsg.content = accumulated;
+
+                      // 尝试提取 HTML 代码并实时渲染
+                      const snippet = extractHtmlFromStream(accumulated);
+                      if (snippet) {
+                        generatedHtml.value = snippet;
+                        assistantMsg.hasCode = true;
+                        updateIframeSandbox(snippet);
+                      }
+                    }
+                  } catch (e) {
+                    // 忽略帧解析微小异常
+                  }
+                }
+              }
+
+              // 自动跟进滚动
+              if (chatContainer.value) {
+                chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+              }
+            }
+
+            // 完成后做最终提取
+            const finalSnippet = extractHtmlFromStream(accumulated);
+            if (finalSnippet) {
+              generatedHtml.value = finalSnippet;
+              assistantMsg.hasCode = true;
+              updateIframeSandbox(finalSnippet);
+              showToast('微应用代码生成完成，已在右侧沙盒就绪！', 'success');
+            }
+          } catch (e) {
+            assistantMsg.content += `\n请求中断或网络异常: ${e.message}`;
+            showToast('流式传输中断', 'error');
+          } finally {
+            isGenerating.value = false;
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        // 一键发布 AI 生成应用
+        const showPublishModal = ref(false);
+        const publishSlug = ref('');
+        const publishTitle = ref('');
+        const publishCategory = ref('效率工具');
+        const publishIcon = ref('🚀');
+        const publishDesc = ref('');
+
+        const openPublishModal = () => {
+          if (!generatedHtml.value) {
+            showToast('请先生成或输入 HTML 代码', 'info');
+            return;
+          }
+          // 自动根据输入提取或生成随机 slug
+          const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+          publishSlug.value = `app-${randomSuffix}`;
+          publishTitle.value = (studioTitle.value && studioTitle.value !== '未命名创意应用') ? studioTitle.value : 'AI 创意微应用';
+          publishCategory.value = '效率工具';
+          publishIcon.value = '⚡';
+          publishDesc.value = '通过 LiteApp Studio AI 创客工作台生成的独立微应用';
+          showPublishModal.value = true;
+          nextTick(() => lucide.createIcons());
+        };
+
+        const handlePublishAiApp = async () => {
+          if (!isAdmin.value) {
+            openLoginModal();
+            return;
+          }
+          try {
+            const res = await fetch('/api/apps', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value,
+              },
+              body: JSON.stringify({
+                slug: publishSlug.value,
+                title: publishTitle.value,
+                category: publishCategory.value,
+                icon: publishIcon.value,
+                description: publishDesc.value,
+                html_content: generatedHtml.value,
+              })
+            });
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '发布失败', 'error');
+              return;
+            }
+            showToast(`微应用已成功发布到门户！路径: /s/${publishSlug.value}/`, 'success');
+            showPublishModal.value = false;
+            fetchApps();
+            currentTab.value = 'portal';
+          } catch (e) {
+            showToast('发布异常: ' + e.message, 'error');
+          }
+        };
+
+        // ================= 模块 3: 手动上传发布与智能元信息提取 =================
+        const uploadMode = ref('single');
+        const formSlug = ref('');
+        const formTitle = ref('');
+        const formCategory = ref('实用小工具');
+        const formIcon = ref('📦');
+        const formDescription = ref('');
+        const formHtmlCode = ref('');
+        const selectedHtmlFile = ref(null);
+        const selectedZipFile = ref(null);
+        const dragOver = ref(false);
+        const isSubmitting = ref(false);
+        const isExtractingMetadata = ref(false);
+        const lastInspectSource = ref('');
+
+        // 图标下拉选择器状态与精选 Emoji 库
+        const activeIconPicker = ref(null); // 'form' | 'publish' | 'edit' | null
+
+        const emojiGroups = ref([
+          { name: '🔥 热门常用', emojis: ['🚀', '⚡', '✨', '💡', '🎯', '🔥', '⭐', '💎', '🏆', '🎉', '🌟', '🍀'] },
+          { name: '⏱️ 效率办公', emojis: ['⏱️', '⏰', '📅', '📝', '📋', '📌', '📁', '📂', '💼', '📐', '📊', '🔍'] },
+          { name: '🛠️ 工具开发', emojis: ['🛠️', '⚙️', '💻', '🖥️', '📱', '⌨️', '🖨️', '🧮', '🔧', '📦', '🧪', '🔒'] },
+          { name: '🎮 娱乐游戏', emojis: ['🎮', '🕹️', '🎲', '♟️', '👾', '🎨', '🎧', '🎬', '🎵', '🔮', '🃏', '🧩'] },
+          { name: '📊 数据金融', emojis: ['📊', '📈', '📉', '🪙', '💰', '💳', '💹', '📑', '🏷️', '🔬', '🏧', '💳'] },
+          { name: '☕ 生活日常', emojis: ['☕', '🍔', '🍕', '🐱', '🐶', '🚗', '✈️', '🏠', '🌤️', '🌈', '🎁', '🥗'] }
+        ]);
+
+        const toggleIconPicker = (target) => {
+          if (activeIconPicker.value === target) {
+            activeIconPicker.value = null;
+          } else {
+            activeIconPicker.value = target;
+          }
+          nextTick(() => lucide.createIcons());
+        };
+
+        const selectIcon = (target, emoji) => {
+          if (target === 'form') {
+            formIcon.value = emoji;
+          } else if (target === 'publish') {
+            publishIcon.value = emoji;
+          } else if (target === 'edit') {
+            editForm.value.icon = emoji;
+          }
+          activeIconPicker.value = null;
+          nextTick(() => lucide.createIcons());
+        };
+
+        const applyInspectedMetadata = (data) => {
+          if (data.title) formTitle.value = data.title;
+          if (data.description) formDescription.value = data.description;
+          if (data.category) formCategory.value = data.category;
+          if (data.icon) formIcon.value = data.icon;
+          if (data.slug) formSlug.value = data.slug;
+          lastInspectSource.value = data.source || 'html_tags';
+        };
+
+        const triggerInspect = async (useAi = false) => {
+          if (uploadMode.value === 'single') {
+            if (!formHtmlCode.value.trim() && !selectedHtmlFile.value) {
+              showToast('请先选择 .html 文件或粘贴 HTML 源码', 'info');
+              return;
+            }
+          } else {
+            if (!selectedZipFile.value) {
+              showToast('请先选择要上传的 .zip 压缩包', 'info');
+              return;
+            }
+          }
+
+          isExtractingMetadata.value = true;
+          try {
+            let res;
+            if (uploadMode.value === 'single') {
+              if (selectedHtmlFile.value) {
+                const fd = new FormData();
+                fd.append('file', selectedHtmlFile.value);
+                fd.append('use_ai', useAi ? 'true' : 'false');
+                res = await fetch('/api/apps/inspect-file', { method: 'POST', body: fd });
+              } else {
+                res = await fetch('/api/apps/inspect-metadata', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    html_content: formHtmlCode.value,
+                    use_ai: useAi,
+                  })
+                });
+              }
+            } else {
+              const fd = new FormData();
+              fd.append('file', selectedZipFile.value);
+              fd.append('use_ai', useAi ? 'true' : 'false');
+              res = await fetch('/api/apps/inspect-file', { method: 'POST', body: fd });
+            }
+
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '元信息提炼失败', 'error');
+              return;
+            }
+            const data = await res.json();
+            applyInspectedMetadata(data);
+            showToast(useAi ? '✨ AI 智能分析与生成项目元信息完成！' : '已自动从网页标签提取项目信息！', 'success');
+          } catch (e) {
+            showToast('元信息提取异常: ' + e.message, 'error');
+          } finally {
+            isExtractingMetadata.value = false;
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        const aiGeneratePublishMetadata = async () => {
+          if (!generatedHtml.value) return;
+          isExtractingMetadata.value = true;
+          try {
+            const res = await fetch('/api/apps/inspect-metadata', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                html_content: generatedHtml.value,
+                use_ai: true,
+              })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.title) publishTitle.value = data.title;
+              if (data.description) publishDesc.value = data.description;
+              if (data.category) publishCategory.value = data.category;
+              if (data.icon) publishIcon.value = data.icon;
+              if (data.slug) publishSlug.value = data.slug;
+              showToast('✨ AI 智能提炼发布信息完成！', 'success');
+            }
+          } catch (e) {
+            showToast('AI 提炼失败', 'error');
+          } finally {
+            isExtractingMetadata.value = false;
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        const handleSelectHtmlFile = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            selectedHtmlFile.value = file;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              formHtmlCode.value = event.target.result;
+              triggerInspect(false);
+            };
+            reader.readAsText(file);
+          }
+        };
+
+        const handleDropHtmlFile = (e) => {
+          dragOver.value = false;
+          const file = e.dataTransfer.files[0];
+          if (file && (file.name.endsWith('.html') || file.name.endsWith('.htm'))) {
+            selectedHtmlFile.value = file;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              formHtmlCode.value = event.target.result;
+              triggerInspect(false);
+            };
+            reader.readAsText(file);
+          } else {
+            showToast('请拖入单个 .html 文件', 'error');
+          }
+        };
+
+        const handleSelectZipFile = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            selectedZipFile.value = file;
+            triggerInspect(false);
+          }
+        };
+
+        const handleDropZipFile = (e) => {
+          dragOver.value = false;
+          const file = e.dataTransfer.files[0];
+          if (file && file.name.endsWith('.zip')) {
+            selectedZipFile.value = file;
+            triggerInspect(false);
+          } else {
+            showToast('请拖入 .zip 格式压缩包', 'error');
+          }
+        };
+
+        const handleManualPublish = async () => {
+          if (!isAdmin.value) {
+            openLoginModal();
+            showToast('发布微应用需要管理员权限，请先登录', 'info');
+            return;
+          }
+
+          if (uploadMode.value === 'single') {
+            if (!formHtmlCode.value.trim() && !selectedHtmlFile.value) {
+              showToast('请选择 .html 文件或直接粘贴 HTML 源码', 'error');
+              return;
+            }
+          } else {
+            if (!selectedZipFile.value) {
+              showToast('请先选择要上传的 .zip 静态网站压缩包', 'error');
+              return;
+            }
+          }
+
+          isSubmitting.value = true;
+          try {
+            const fd = new FormData();
+            fd.append('slug', formSlug.value);
+            fd.append('title', formTitle.value);
+            fd.append('description', formDescription.value);
+            fd.append('category', formCategory.value);
+            fd.append('icon', formIcon.value);
+
+            if (uploadMode.value === 'single') {
+              if (selectedHtmlFile.value) {
+                fd.append('file', selectedHtmlFile.value);
+              } else {
+                const blob = new Blob([formHtmlCode.value], { type: 'text/html' });
+                fd.append('file', blob, 'index.html');
+              }
+            } else {
+              fd.append('file', selectedZipFile.value);
+            }
+
+            const res = await fetch('/api/apps/upload', {
+              method: 'POST',
+              headers: { 'X-Admin-Token': adminToken.value },
+              body: fd,
+            });
+
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '部署失败', 'error');
+              return;
+            }
+
+            showToast(`微应用发布成功！访问路径: /s/${formSlug.value}/`, 'success');
+            // 清理表单
+            formSlug.value = '';
+            formTitle.value = '';
+            formDescription.value = '';
+            formHtmlCode.value = '';
+            selectedHtmlFile.value = null;
+            selectedZipFile.value = null;
+            fetchApps();
+            currentTab.value = 'portal';
+          } catch (e) {
+            showToast('网络请求异常: ' + e.message, 'error');
+          } finally {
+            isSubmitting.value = false;
+          }
+        };
+
+        // ================= 模块 4: 模型配置管理 =================
+        const modelsList = ref([]);
+        const showModelModal = ref(false);
+        const modelForm = ref({ id: null, name: '', base_url: '', api_key: '', model_name: '', is_active: true });
+
+        const activeModelName = computed(() => {
+          const active = modelsList.value.find(m => m.is_active);
+          return active ? `${active.name} (${active.model_name})` : (modelsList.value[0]?.model_name || '未配置');
+        });
+
+        const fetchModels = async () => {
+          if (!isAdmin.value) return;
+          try {
+            const res = await fetch('/api/llm/configs', {
+              headers: { 'X-Admin-Token': adminToken.value }
+            });
+            if (res.ok) {
+              modelsList.value = await res.json();
+            }
+          } catch (e) {
+            // 忽略非关键错误
+          } finally {
+            nextTick(() => lucide.createIcons());
+          }
+        };
+
+        const openAddModelModal = () => {
+          if (!isAdmin.value) {
+            openLoginModal();
+            return;
+          }
+          modelForm.value = { id: null, name: '', base_url: 'https://api.openai.com/v1', api_key: '', model_name: 'gpt-4o', is_active: true };
+          showModelModal.value = true;
+          nextTick(() => lucide.createIcons());
+        };
+
+        const openEditModelModal = (m) => {
+          modelForm.value = { ...m, api_key: '' };
+          showModelModal.value = true;
+          nextTick(() => lucide.createIcons());
+        };
+
+        const handleSaveModelSubmit = async () => {
+          const isEdit = !!modelForm.value.id;
+          const url = isEdit ? `/api/llm/configs/${modelForm.value.id}` : '/api/llm/configs';
+          const method = isEdit ? 'PUT' : 'POST';
+
+          try {
+            const res = await fetch(url, {
+              method,
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': adminToken.value,
+              },
+              body: JSON.stringify(modelForm.value)
+            });
+
+            if (!res.ok) {
+              const err = await res.json();
+              showToast(err.detail || '保存失败', 'error');
+              return;
+            }
+
+            showToast('模型配置保存成功！', 'success');
+            showModelModal.value = false;
+            fetchModels();
+          } catch (e) {
+            showToast('请求失败: ' + e.message, 'error');
+          }
+        };
+
+        const activateModel = async (id) => {
+          try {
+            const res = await fetch(`/api/llm/configs/${id}/activate`, {
+              method: 'POST',
+              headers: { 'X-Admin-Token': adminToken.value }
+            });
+            if (res.ok) {
+              showToast('默认模型已切换！', 'success');
+              fetchModels();
+            }
+          } catch (e) {
+            showToast('切换失败', 'error');
+          }
+        };
+
+        const testModelConnection = async (id) => {
+          showToast('正在测试端点连通性...', 'info');
+          try {
+            const res = await fetch(`/api/llm/configs/${id}/test`, {
+              method: 'POST',
+              headers: { 'X-Admin-Token': adminToken.value }
+            });
+            const data = await res.json();
+            if (data.success) {
+              showToast('连通性测试通过: ' + data.message, 'success');
+            } else {
+              showToast('连通失败: ' + data.message, 'error');
+            }
+          } catch (e) {
+            showToast('网络测试失败: ' + e.message, 'error');
+          }
+        };
+
+        const confirmDeleteModel = async (m) => {
+          if (!confirm(`确定要删除模型配置 "${m.name}" 吗？`)) return;
+          try {
+            const res = await fetch(`/api/llm/configs/${m.id}`, {
+              method: 'DELETE',
+              headers: { 'X-Admin-Token': adminToken.value }
+            });
+            if (res.ok) {
+              showToast('模型配置已删除', 'success');
+              fetchModels();
+            }
+          } catch (e) {
+            showToast('删除失败', 'error');
+          }
+        };
+
+        // 工具函数
+        const formatDate = (dateStr) => {
+          if (!dateStr) return '';
+          try {
+            const d = new Date(dateStr);
+            return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+          } catch (e) {
+            return dateStr;
+          }
+        };
+
+        const formatFileSize = (bytes) => {
+          if (!bytes) return '0 B';
+          const k = 1024;
+          const sizes = ['B', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
+
+        const renderMarkdown = (text) => {
+          try {
+            return marked.parse(text || '');
+          } catch (e) {
+            return text;
+          }
+        };
+
+        // 监听 Tab 切换重绘图标并同步浏览器 URL 路由
+        watch(currentTab, (newTab) => {
+          if (newTab === 'settings') {
+            fetchModels();
+          }
+          const targetPath = newTab === 'portal' ? '/' : `/${newTab}`;
+          if (window.location.pathname !== targetPath) {
+            try {
+              window.history.pushState(null, '', targetPath);
+            } catch (e) {
+              // 兼容沙箱或 file:// 协议限制
+            }
+          }
+          nextTick(() => lucide.createIcons());
+        });
+
+        // 初始化挂载
+        onMounted(async () => {
+          window.addEventListener('popstate', () => {
+            currentTab.value = parseTabFromLocation();
+          });
+          lucide.createIcons();
+          await checkAuth();
+          await fetchApps();
+          if (isAdmin.value) {
+            await fetchModels();
+          }
+        });
+
+        return {
+          isDark, toggleTheme,
+          currentTab,
+          isAdmin, adminToken, showLoginModal, loginInputPassword, openLoginModal, handleLoginSubmit, handleLogout,
+          toasts, showToast,
+          // 广场
+          apps, categories, allAppsCount, selectedCategory, searchQuery, loadingApps,
+          filterCategory, handleSearch, openApp, copyShareLink,
+          showEditModal, editForm, openEditModal, handleEditSubmit,
+          showOverwriteModal, overwriteAppSlug, overwriteFileName, overwriteCodeText, openOverwriteModal, handleSelectOverwriteTarget, submitOverwrite,
+          confirmDeleteApp,
+          // 二次迭代与版本快照
+          editingApp, editInStudio, cancelEditingApp, overwriteEditingApp,
+          showVersionsModal, currentVersionApp, versionsList, loadingVersions, openVersionsModal, previewVersion, rollbackToVersion,
+          // 智能微应用生成向导与扩展
+          showGeneratorModal, generatorTab, isGeneratingApp, agentForm, n8nForm, formMode, customForm, openGeneratorModal, handleFormTableFileChange, submitGenerate,
+          quickAgentIdea, isGeneratingField, showAdvancedExtensions, triggerFastAgentSuite, applyAgentPreset, aiPolishField, addToolToAgent, removeToolFromAgent,
+          // 表单采集数据查看与导出
+          showSubmissionsModal, currentSubmissionsApp, submissionsList, submissionsTotal, loadingSubmissions, openSubmissionsModal, exportSubmissionsCsv,
+          // AI (Google AI Studio 范式增强)
+          studioTitle, isEditingStudioTitle, studioTitleInput, startEditStudioTitle,
+          showSystemInstruction, systemInstructionText, isOptimizingSystemInstruction,
+          optimizeSystemInstruction, resetSystemInstruction,
+          rightPanelTab, runSettings,
+          showGetCodeModal, getCodeLang, openGetCodeModal, currentSnippetCode, copySnippetCode,
+          activeLeftTab, viewportMode, chatMessages, promptInput, isGenerating, generatedHtml,
+          sandboxFrame, chatContainer, presetPrompts, activeModelName,
+          usePresetPrompt, aiPolishPromptInput, refreshPreview, handleCodeChange, copyCode, clearChat, openInNewTab,
+          sendPrompt, showPublishModal, publishSlug, publishTitle, publishCategory, publishIcon, publishDesc, openPublishModal, handlePublishAiApp,
+          // 上传与智能提取
+          uploadMode, formSlug, formTitle, formCategory, formIcon, formDescription, formHtmlCode,
+          selectedHtmlFile, selectedZipFile, dragOver, isSubmitting,
+          isExtractingMetadata, lastInspectSource, triggerInspect, aiGeneratePublishMetadata,
+          activeIconPicker, emojiGroups, toggleIconPicker, selectIcon,
+          handleSelectHtmlFile, handleDropHtmlFile, handleSelectZipFile, handleDropZipFile, handleManualPublish,
+          // 模型设置
+          modelsList, showModelModal, modelForm, openAddModelModal, openEditModelModal, handleSaveModelSubmit,
+          activateModel, testModelConnection, confirmDeleteModel,
+          // 工具
+          formatDate, formatFileSize, renderMarkdown,
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
