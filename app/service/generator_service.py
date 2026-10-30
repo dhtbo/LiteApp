@@ -20,7 +20,8 @@ def sanitize_slug(name: str) -> str:
     将中文或混合名称转为合法的 URL slug 候选字符串 (只允许 a-z, 0-9, -, _，且以英文字母或数字开头)
     """
     import random
-    clean = re.sub(r"[^a-zA-Z0-9\s-_]", "", name.lower())
+    # 注意：短横线 \- 必须转义，避免在 Python 3.11+ 解释器中被解析为 \s 到 _ 的无效字符区间 (bad character range \s-_)
+    clean = re.sub(r"[^a-zA-Z0-9\s_\-]", "", name.lower())
     clean = re.sub(r"[-\s]+", "-", clean).strip("-_")
     if not clean or len(clean) < 2 or not clean[0].isalnum():
         ascii_words = re.findall(r"[a-z0-9]+", name.lower())

@@ -230,12 +230,12 @@ def extract_html_basic_metadata(html_content: str, filename: Optional[str] = Non
     # 5. 生成合规的 URL Slug
     if filename:
         raw_name = re.sub(r"\.(html?|zip)$", "", filename, flags=re.IGNORECASE).lower()
-        cleaned_slug = re.sub(r"[^a-z0-9-_]", "-", raw_name).strip("-")
+        cleaned_slug = re.sub(r"[^a-z0-9_\-]", "-", raw_name).strip("-")
         if len(cleaned_slug) >= 2:
             slug = cleaned_slug[:30]
 
     if not slug:
-        cleaned_slug = re.sub(r"[^a-z0-9-_]", "-", title.lower()).strip("-")
+        cleaned_slug = re.sub(r"[^a-z0-9_\-]", "-", title.lower()).strip("-")
         if len(cleaned_slug) >= 2:
             slug = cleaned_slug[:30]
         else:
@@ -331,7 +331,7 @@ async def analyze_app_metadata_with_ai(
                         "description": str(parsed.get("description") or fallback["description"])[:200],
                         "category": str(parsed.get("category") or fallback["category"])[:20],
                         "icon": str(parsed.get("icon") or fallback["icon"])[:10],
-                        "slug": re.sub(r"[^a-z0-9-_]", "-", str(parsed.get("slug") or fallback["slug"]).lower()).strip("-")[:30] or fallback["slug"],
+                        "slug": re.sub(r"[^a-z0-9_\-]", "-", str(parsed.get("slug") or fallback["slug"]).lower()).strip("-")[:30] or fallback["slug"],
                         "source": "ai_generated"
                     }
     except Exception as e:

@@ -86,6 +86,30 @@ def test_agent_tools_and_ai_gen_pipeline():
     print(f"✓ 3. 全套智能体构思成功 (标题: {suite_data['title']}, Skills: {suite_data['skills']}, Tools: {len(suite_data['tools'])} 个)")
 
     # 4. 测试生成包含 Tools 与 Skills 的智能体微应用
+    # 4.1 测试向导模式 (auto_publish=false 且无预设 slug，纯中文及混合字符标题自动推导合法 slug)
+    wizard_agent_req = {
+        "title": "智能微应用对话助手 2.0 (测试版)",
+        "icon": "🤖",
+        "description": "智能向导自动生成测试",
+        "system_prompt": "你是一个助手。",
+        "welcome_message": "你好！",
+        "quick_prompts": ["帮助"],
+        "tools": [],
+        "skills": [],
+        "mcp_servers": []
+    }
+    wizard_res = client.post(
+        "/api/generator/agent?auto_publish=false",
+        json=wizard_agent_req,
+        headers=admin_headers
+    )
+    assert wizard_res.status_code == 200, f"向导生成智能体失败: {wizard_res.text}"
+    wizard_data = wizard_res.json()
+    assert wizard_data["slug"], "自动生成的微应用必须包含合法 slug"
+    assert not wizard_data["slug"].startswith("-"), "slug 不能以中划线开头"
+    print(f"✓ 4.1 测试向导免发布生成成功 (标题「{wizard_agent_req['title']}」推导 slug: {wizard_data['slug']})")
+
+    # 4.2 测试生成并发布自定义应用
     test_slug = "test-n8n-architect-agent"
     client.delete(f"/api/apps/{test_slug}", headers=admin_headers)
 
