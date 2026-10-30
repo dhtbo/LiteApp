@@ -8,6 +8,7 @@ import sys
 import json
 from typing import Optional, Dict, Any
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from app.service import mcp_service
 
@@ -15,6 +16,11 @@ from app.service import mcp_service
 mcp = FastMCP(
     name="LiteApp",
     instructions="LiteApp 静态微应用托管与发布平台 MCP 服务。提供一键发布独立单页静态微应用 (HTML/CSS/JS)、查询应用列表、获取源码进行二次迭代等能力。",
+)
+
+# 允许外部反向代理与公网域名访问 SSE 端点，关闭默认的 Host 严格校验以避免 421 Misdirected Request
+mcp.settings.transport_security = TransportSecuritySettings(
+    enable_dns_rebinding_protection=False
 )
 
 @mcp.tool(
