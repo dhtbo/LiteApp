@@ -1,6 +1,6 @@
 import re
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 SLUG_REGEX = re.compile(r"^[a-z0-9][a-z0-9-_]{1,49}$")
 
@@ -214,7 +214,16 @@ class AgentProxyCallRequest(BaseModel):
     """
     智能体后端通用 API 代理调用中继请求
     """
-    url: str = Field(..., description="目标 API 的完整 URL 地址")
+    url: Optional[str] = Field(None, description="目标 API 的完整 URL 地址")
+    endpoint: Optional[str] = Field(None, description="兼容目标 API 别名字段")
     method: str = Field("POST", description="HTTP 请求方式 (POST/GET/PUT/DELETE)")
     headers: Optional[Dict[str, str]] = Field(default_factory=dict, description="传递给目标 API 的 Header (如 API Key)")
     payload: Optional[Dict[str, Any]] = Field(default_factory=dict, description="请求体 JSON 数据")
+
+    @model_validator(mode="after")
+    def resolve_url(self):
+        if not self.url and not self.endpoint:
+            raise ValueError("必须提供目标地址 url 或 endpoint")
+        if not self.url and self.endpoint:
+            self.url = self.endpoint
+        return self

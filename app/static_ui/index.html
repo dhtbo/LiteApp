@@ -4081,16 +4081,18 @@ generateApp();`;
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
+                url: target,
                 endpoint: target,
                 method: 'GET',
                 headers: headers
               })
             });
             const data = await res.json();
-            if (res.ok && (data.status === 'success' || data.data)) {
+            if (res.ok && data.status_code >= 200 && data.status_code < 300) {
               showToast('n8n 服务连通正常！', 'success');
             } else {
-              showToast('n8n 连通异常: ' + (data.message || JSON.stringify(data)), 'error');
+              const errMsg = data.data?.message || data.text || data.message || (data.detail ? JSON.stringify(data.detail) : '响应异常 (HTTP ' + (data.status_code || res.status) + ')');
+              showToast('n8n 连通异常: ' + errMsg, 'error');
             }
           } catch (e) {
             showToast('测试连接失败: ' + e.message, 'error');

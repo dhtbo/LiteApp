@@ -157,14 +157,14 @@ def test_agent_tools_and_ai_gen_pipeline():
     print("✓ 7.1 验证 API 代理网关协议过滤机制正常 (阻止非 http/https)")
 
     # 7.2 测试连通性处理 (访问一个本地快速响应端点或测试响应结构)
-    # 测试通过代理中继访问健康检查端点
+    # 测试通过代理中继访问健康检查端点 (验证 endpoint 兼容别名)
     proxy_test = client.post("/api/agent/proxy-call", json={
-        "url": "http://127.0.0.1:8000/api/health",
+        "endpoint": "http://127.0.0.1:8000/api/health",
         "method": "GET"
     })
     # 在测试客户端中，如果目标未启动单独端口可能连接失败，但代理端点本身应正常处理异常并返回 status_code
     assert proxy_test.status_code in [200, 502], f"代理测试状态码异常: {proxy_test.status_code}"
-    print(f"✓ 7.2 验证 API 代理中继网关链路完整 (响应状态码: {proxy_test.status_code})")
+    print(f"✓ 7.2 验证 API 代理中继网关链路完整 (支持 endpoint 别名, 响应状态码: {proxy_test.status_code})")
 
     # 8. 清理测试产生的应用
     cleanup_res = client.delete(f"/api/apps/{app_slug}", headers=admin_headers)
