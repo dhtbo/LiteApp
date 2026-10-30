@@ -52,7 +52,17 @@
   - **表格文件推断生成**：上传 CSV 或 Excel (.xlsx) 模板表格，自动识别表头与字段类型。
   - **数据收集与导出**：自带 LocalStorage 本地暂存、防误关草稿箱、一键导出 CSV 报表，并支持异步 POST 转发至飞书/钉钉/企业微信/n8n Webhook。
 
-### 5. 手动上传与智能部署器 (Manual Uploader)
+### 5. 🤖 MCP (Model Context Protocol) 开放协议支持
+LiteApp 原生内置符合 Anthropic 官方规范的 **FastMCP 服务**，将平台核心发布与检索能力全面开放给外部 AI 智能体（Claude Desktop、Cursor、Antigravity、VS Code 等）：
+- **`publish_static_app`**：一键将单页 HTML/CSS/JS 代码发布为在线微应用并生成访问 URL（支持新建与覆盖版本快照）。
+- **`get_static_app`**：按 slug 读取微应用的元数据与完整源码，供大模型进行二次分析或增量修改。
+- **`list_static_apps`**：查询当前平台已发布的全部微应用列表及分类统计。
+- **`delete_static_app`**：删除指定的微应用及其磁盘静态资源。
+- **双模式运行**：
+  - **本地 stdio 模式**：通过 `python mcp_server.py` 本地直连，零额外依赖。
+  - **远程网络 SSE 模式**：通过 `http://<host>:<port>/mcp/sse` 端点，远程 Agent 可跨网络直连。
+
+### 6. 手动上传与智能部署器 (Manual Uploader)
 - **模式 A（单 HTML 上传/源码粘贴）**：直接拖拽单文件 `.html` 或粘贴源码，自动保存为标准 `index.html`。
 - **模式 B（静态目录 ZIP 压缩包上传）**：支持上传包含 HTML/CSS/JS/图片/字体等完整前端资源的 `.zip` 压缩包。
 - **企业级解压安全与智能扁平化**：
@@ -228,6 +238,44 @@ LiteApp Studio 专为 Coolify 平台原生优化，部署步骤极为简单：
    - 在 **Domains** 处绑定你的自定义域名（例如 `apps.yourdomain.com`），Coolify 会自动申请并配置 Let's Encrypt SSL 证书。
 7. **点击 Deploy**：
    - 构建完成后，访问你的域名即可直接体验 LiteApp Studio！
+
+---
+
+## 🔌 本地与远程 MCP 接入指南
+
+LiteApp 提供了符合 Model Context Protocol 规范的 MCP 服务，可直接接入主流 AI 编辑器与智能体：
+
+### 1. Claude Desktop 配置
+编辑 Claude Desktop 配置文件（Windows: `%APPDATA%\Claude\claude_desktop_config.json`，macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`）：
+```json
+{
+  "mcpServers": {
+    "liteapp": {
+      "command": "python",
+      "args": ["-m", "app.mcp_server"],
+      "cwd": "D:\\DEV\\LiteApp"
+    }
+  }
+}
+```
+
+### 2. Cursor / VS Code / Antigravity 本地配置
+在 `.cursor/mcp.json` 或对应工具中配置：
+```json
+{
+  "mcpServers": {
+    "liteapp": {
+      "command": "python",
+      "args": ["mcp_server.py"]
+    }
+  }
+}
+```
+
+### 3. 远程网络模式 (SSE)
+当通过网络连接远程云端部署的 LiteApp 时：
+- **SSE 端点 URL**: `https://liteapp.ljcode.cn/mcp/sse`
+- 在支持 HTTP/SSE 的 MCP 客户端中填入该 URL 即可直连。
 
 ---
 

@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.logger import logger
 from app.repository.database import init_db
 from app.api import auth, apps, llm, sites, generator, forms, system
+from app.mcp_server import mcp
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -54,6 +55,60 @@ app.include_router(generator.router)
 app.include_router(forms.router)
 app.include_router(system.router)
 
+# 挂载 MCP (Model Context Protocol) SSE 传输服务端点
+# 允许外部 Claude / Cursor / 智能体通过 http://<host>:<port>/mcp/sse 直连
+app.mount("/mcp", mcp.sse_app())
+
+@app.get("/api/mcp/info", tags=["MCP 协议生态"])
+async def get_mcp_info(request: Request) -> dict:
+    """
+    获取平台 MCP 服务配置指引与元数据
+    """
+    base_url = str(request.base_url).rstrip("/")
+    return {
+        "status": "ready",
+        "name": "LiteApp MCP Server",
+        "protocol": "Model Context Protocol (MCP)",
+        "version": "1.0.0",
+        "sse_endpoint": f"{base_url}/mcp/sse",
+        "tools": [
+            {
+                "name": "publish_static_app",
+                "description": "一键将单页 HTML/CSS/JS 代码发布为在线微应用并生成访问 URL",
+                "parameters": ["title", "html_content", "slug", "description", "category", "icon", "overwrite"]
+            },
+            {
+                "name": "list_static_apps",
+                "description": "查询当前平台上已发布的微应用列表与分类",
+                "parameters": ["category", "search"]
+            },
+            {
+                "name": "get_static_app",
+                "description": "读取微应用的元数据与完整的入口 index.html 源码以供二次修改",
+                "parameters": ["slug"]
+            },
+            {
+                "name": "delete_static_app",
+                "description": "删除指定的微应用及其磁盘静态文件与版本快照",
+                "parameters": ["slug"]
+            }
+        ],
+        "configs": {
+            "claude_desktop": {
+                "mcpServers": {
+                    "liteapp": {
+                        "command": "python",
+                        "args": ["-m", "app.mcp_server"],
+                        "cwd": str(Path(__file__).resolve().parent.parent)
+                    }
+                }
+            },
+            "cursor_or_remote_sse": {
+                "url": f"{base_url}/mcp/sse"
+            }
+        }
+    }
+
 # 容器健康检查端点 (Docker HEALTHCHECK / Coolify 探针)
 @app.get("/api/health", tags=["系统监控"])
 async def health_check() -> dict:
@@ -64,6 +119,7 @@ async def health_check() -> dict:
         "status": "healthy",
         "service": "LiteApp Studio",
         "database": "connected",
+        "mcp_sse": "mounted",
         "sites_dir_exists": settings.sites_path.exists(),
     }
 

@@ -1412,6 +1412,99 @@
             </div>
           </div>
         </div>
+
+        <!-- 卡片 3: MCP (Model Context Protocol) 开放协议接入与本地 Agent 支持 -->
+        <div class="mt-8 rounded-3xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                  <i data-lucide="cpu" class="w-5 h-5"></i>
+                </span>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white">MCP (Model Context Protocol) 开放协议接入</h3>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  本地 Stdio 与 SSE 就绪
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                已将 LiteApp 平台能力开放为标准本地 MCP 服务。让 Claude Desktop、Cursor、Antigravity 等外部 AI 智能体直接调用「发布静态页」一键生成在线微应用。
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button 
+                type="button" 
+                @click="copyMcpConfig('claude')" 
+                class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-500/20 flex items-center gap-1.5 transition">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>复制 Claude 配置</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 工具清单 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+              <div class="flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400 mb-1">
+                <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                <code>publish_static_app</code>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400">
+                一键把单页 HTML/CSS/JS 代码发布为在线微应用。智能分配访问 URL、自动归档历史版本快照。
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+              <div class="flex items-center gap-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1">
+                <i data-lucide="code" class="w-4 h-4"></i>
+                <code>get_static_app</code>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400">
+                根据 slug 读取微应用的元数据与完整源码，方便 AI 对现有页面进行针对性增量修改与迭代。
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+              <div class="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+                <i data-lucide="layers" class="w-4 h-4"></i>
+                <code>list_static_apps</code>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400">
+                查询平台上全部已发布的微应用列表、分类以及在线访问地址。
+              </p>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+              <div class="flex items-center gap-2 text-xs font-bold text-rose-600 dark:text-rose-400 mb-1">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                <code>delete_static_app</code>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400">
+                删除指定微应用，同步清理磁盘静态目录与版本快照。
+              </p>
+            </div>
+          </div>
+
+          <!-- 配置接入示例展示 -->
+          <div class="mt-5 p-4 rounded-2xl bg-slate-900 text-slate-200 font-mono text-xs border border-slate-800 relative group">
+            <div class="flex items-center justify-between text-slate-400 pb-2 mb-2 border-b border-slate-800 text-[11px]">
+              <span>claude_desktop_config.json / Antigravity 本地配置示例</span>
+              <button @click="copyMcpConfig('claude')" class="hover:text-white transition flex items-center gap-1">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>点击复制</span>
+              </button>
+            </div>
+            <pre class="overflow-x-auto text-[11px] leading-relaxed text-purple-300"><code>{
+  "mcpServers": {
+    "liteapp": {
+      "command": "python",
+      "args": ["-m", "app.mcp_server"]
+    }
+  }
+}</code></pre>
+          </div>
+        </div>
       </section>
 
     </main>
@@ -2417,6 +2510,23 @@
 
         const openApp = (slug) => {
           window.open(`/s/${slug}/`, '_blank');
+        };
+
+        const copyMcpConfig = async (type = 'claude') => {
+          const configJson = JSON.stringify({
+            mcpServers: {
+              liteapp: {
+                command: "python",
+                args: ["-m", "app.mcp_server"]
+              }
+            }
+          }, null, 2);
+          try {
+            await navigator.clipboard.writeText(configJson);
+            showToast('MCP 客户端配置 JSON 已复制到剪贴板！', 'success');
+          } catch (e) {
+            showToast('复制失败，请手动复制配置代码', 'info');
+          }
         };
 
         const copyShareLink = async (slug) => {
@@ -4087,6 +4197,7 @@ generateApp();`;
           activateModel, testModelConnection, confirmDeleteModel,
           systemConfig, isSavingSystemConfig, isTestingN8n, fetchSystemConfig, handleSaveSystemConfig, testN8nConnection,
           // 工具
+          copyMcpConfig,
           formatDate, formatFileSize, renderMarkdown,
         };
       }
