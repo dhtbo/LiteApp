@@ -665,14 +665,17 @@
                     class="p-3.5 max-w-[85%] shadow-sm leading-relaxed break-words">
                     <div v-if="msg.role === 'user'">{{ msg.content }}</div>
                     <div v-else>
-                      <div v-if="msg.rawExplanation" class="mb-2 text-slate-500 dark:text-slate-400" v-html="renderMarkdown(msg.rawExplanation)"></div>
+                      <div v-if="getExplanationText(msg)" class="mb-2 text-slate-500 dark:text-slate-400" v-html="renderMarkdown(getExplanationText(msg))"></div>
                       <div v-if="msg.hasCode" class="flex items-center gap-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 font-mono">
                         <i data-lucide="check-circle" class="w-4 h-4"></i>
-                        <span>已成功生成单文件 HTML 代码并注入沙盒预览</span>
+                        <span>{{ msg.isInitialAppSource ? '已载入微应用源码并注入沙盒预览' : '已成功生成单文件 HTML 代码并注入沙盒预览' }}</span>
                       </div>
                       <div v-else-if="isGenerating && index === chatMessages.length - 1" class="flex items-center gap-2 text-slate-400 pulse-glow">
                         <i data-lucide="loader" class="w-4 h-4 animate-spin text-brand-500"></i>
                         <span>AI 正在流式编写代码并构建 DOM...</span>
+                      </div>
+                      <div v-else-if="!getExplanationText(msg) && !msg.hasCode && msg.content" class="text-slate-600 dark:text-slate-300">
+                        {{ msg.content }}
                       </div>
                     </div>
                   </div>
@@ -2664,11 +2667,15 @@
             editingApp.value = { ...app };
             studioTitle.value = app.title || '编辑微应用';
             generatedHtml.value = data.html_content || '';
+            const appCode = data.html_content || '';
+            const codeBlock = appCode ? `\`\`\`html\n${appCode}\n\`\`\`` : '';
             chatMessages.value = [
               {
                 role: 'assistant',
-                rawExplanation: `已载入微应用 **${app.title}** (\`/s/${app.slug}/\`) 的完整源码！\n\n您可以在左侧直接描述增量修改需求（例如："更换配色方案"、"新增导出功能"），AI 将为您进行精准二次迭代。满意后可点击右上角 **「覆盖更新原应用」** 或 **「另存为新应用」**。`,
-                hasCode: !!data.html_content,
+                content: appCode ? `已载入微应用《${app.title}》的当前完整源码：\n${codeBlock}` : `已载入微应用《${app.title}》。`,
+                rawExplanation: `已载入微应用 **${app.title}** (\`/s/${app.slug}/\`) 的完整源码！\n\n您可以在下方输入框直接描述增量修改需求（例如："更换配色方案"、"新增导出功能"），AI 将基于已有代码为您进行精准二次迭代。满意后可点击右上角 **「覆盖更新原应用」** 或 **「另存为新应用」**。`,
+                hasCode: !!appCode,
+                isInitialAppSource: true,
               }
             ];
             activeLeftTab.value = 'code';
@@ -3479,10 +3486,39 @@ generateApp();`;
           });
 
           try {
-            const apiMessages = chatMessages.value.slice(0, -1).map(m => ({
-              role: m.role,
-              content: m.content
-            }));
+            // 构造消息上下文
+            const rawHistory = chatMessages.value.slice(0, -1);
+            const hasCodeContext = rawHistory.some(m => m.role === 'assistant' && (m.hasCode || (m.content && m.content.includes('```html'))));
+            
+            // 如果用户在 Code 视图或手动修改过最新代码，确保最新的代码传递给 AI
+            if (generatedHtml.value && hasCodeContext) {
+              for (let i = rawHistory.length - 1; i >= 0; i--) {
+                if (rawHistory[i].role === 'assistant' && (rawHistory[i].hasCode || (rawHistory[i].content && rawHistory[i].content.includes('```html')))) {
+                  rawHistory[i].content = `这是当前微应用的最新完整源码：\n\`\`\`html\n${generatedHtml.value}\n\`\`\``;
+                  break;
+                }
+              }
+            } else if (generatedHtml.value && !hasCodeContext && rawHistory.length > 0) {
+              // 若之前没有注入源码记录，自动在首条之前前置注入当前已有代码
+              const initialContextMsg = {
+                role: 'assistant',
+                content: `这是当前微应用的最新完整源码：\n\`\`\`html\n${generatedHtml.value}\n\`\`\``,
+                rawExplanation: '已载入当前微应用已有源码作为基础上下文。',
+                hasCode: true,
+                isInitialAppSource: true,
+              };
+              rawHistory.unshift(initialContextMsg);
+              chatMessages.value.splice(0, 0, initialContextMsg);
+            }
+
+            // 过滤并规范化消息，严格保证 role 与 content 有效非空，防止出现 undefined/null 导致的 422 验证报错
+            const apiMessages = rawHistory
+              .filter(m => m && m.role && (m.content || m.rawExplanation))
+              .map(m => ({
+                role: m.role,
+                content: (m.content || m.rawExplanation || '').trim()
+              }))
+              .filter(m => m.content.length > 0);
 
             const payload = {
               messages: apiMessages,
@@ -4120,6 +4156,15 @@ generateApp();`;
           return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         };
 
+        const getExplanationText = (msg) => {
+          if (!msg) return '';
+          if (msg.rawExplanation) return msg.rawExplanation;
+          if (!msg.content) return '';
+          // 若包含代码块，提取代码块前后的说明文字；若不含代码块，直接返回内容
+          const textWithoutCode = msg.content.replace(/```(?:html)?\s*[\s\S]*?```/gi, '').trim();
+          return textWithoutCode;
+        };
+
         const renderMarkdown = (text) => {
           try {
             return marked.parse(text || '');
@@ -4200,7 +4245,7 @@ generateApp();`;
           systemConfig, isSavingSystemConfig, isTestingN8n, fetchSystemConfig, handleSaveSystemConfig, testN8nConnection,
           // 工具
           copyMcpConfig,
-          formatDate, formatFileSize, renderMarkdown,
+          formatDate, formatFileSize, renderMarkdown, getExplanationText,
         };
       }
     }).mount('#app');

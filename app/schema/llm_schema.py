@@ -53,7 +53,7 @@ class AIChatMessage(BaseModel):
     AI 对话历史单条消息
     """
     role: str = Field(..., description="角色：system / user / assistant")
-    content: str = Field(..., description="文本内容")
+    content: Optional[str] = Field("", description="文本内容")
 
 class AIChatRequest(BaseModel):
     """

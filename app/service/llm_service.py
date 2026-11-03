@@ -61,8 +61,8 @@ async def stream_openai_chat(
     sys_prompt = system_instruction.strip() if (system_instruction and system_instruction.strip()) else SYSTEM_PROMPT_FOR_LITEAPP
     formatted_messages = [{"role": "system", "content": sys_prompt}]
     for m in messages:
-        if m.role != "system":
-            formatted_messages.append({"role": m.role, "content": m.content})
+        if m.role != "system" and m.content and m.content.strip():
+            formatted_messages.append({"role": m.role, "content": m.content.strip()})
 
     headers = {
         "Authorization": f"Bearer {provider.api_key}",
